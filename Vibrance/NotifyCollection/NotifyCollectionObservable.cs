@@ -21,9 +21,13 @@ internal sealed class NotifyCollectionObservable<T> : IObservable<Change<T>>
 
 	private static void SendInitialItems(IObserver<Change<T>> observer, IReadOnlyCollection<T> collection)
 	{
-		if (collection.Count == 1)
-			observer.OnNext(new AddItemChange<T>(collection.Single(), 0));
-		else if (collection.Count > 1)
-			observer.OnNext(new AddRangeChange<T>(collection, 0, collection.Count));
+		if (collection.Count == 0)
+			return;
+		Change<T> change = new()
+		{
+			NewItems = collection.ToList(),
+			NewItemsStartIndex = 0
+		};
+		observer.OnNext(change);
 	}
 }

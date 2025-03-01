@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using Vibrance.Changes;
 
@@ -12,6 +14,14 @@ internal sealed class NotifyCollectionSubscription<T> : IDisposable
 		_observer = observer;
 	}
 
+	public void Dispose()
+	{
+		if (_disposed)
+			return;
+		_collection.CollectionChanged -= OnCollectionChanged;
+		_disposed = true;
+	}
+
 	private readonly INotifyCollectionChanged _collection;
 	private readonly IObserver<Change<T>> _observer;
 	private bool _disposed;
@@ -22,24 +32,24 @@ internal sealed class NotifyCollectionSubscription<T> : IDisposable
 		_observer.OnNext(change);
 	}
 
-	private Change<T> ArgsToChange(NotifyCollectionChangedEventArgs args) => args switch
+	private static Change<T> ArgsToChange(NotifyCollectionChangedEventArgs args)
 	{
-		{ Action: NotifyCollectionChangedAction.Add, NewItems: [T item] } => new AddItemChange<T>(item, args.NewStartingIndex),
-		{ Action: NotifyCollectionChangedAction.Add, NewItems.Count: > 1} => new AddRangeChange<T>(args.NewItems.Cast<T>(), args.NewStartingIndex, args.NewItems.Count),
-		{ Action: NotifyCollectionChangedAction.Remove, OldItems: [T item] } => new RemoveItemChange<T>(item, args.OldStartingIndex),
-		{ Action: NotifyCollectionChangedAction.Remove, OldItems.Count: > 1} => new RemoveRangeChange<T>(args.OldItems.Cast<T>(), args.OldStartingIndex, args.OldItems.Count),
-		{ Action: NotifyCollectionChangedAction.Replace, NewItems: [T oldItem], OldItems: [T newItem] } => new ReplaceItemChange<T>(newItem, oldItem, args.NewStartingIndex),
-		{ Action: NotifyCollectionChangedAction.Move, NewItems: [T item] } => new MoveItemChange<T>(item, args.OldStartingIndex, args.NewStartingIndex),
-		{ Action: NotifyCollectionChangedAction.Move, NewItems.Count : > 1 } => new MoveRangeChange<T>(args.NewItems.Cast<T>(), args.OldStartingIndex, args.NewStartingIndex, args.NewItems.Count),
-		{ Action: NotifyCollectionChangedAction.Reset } when _collection is IEnumerable<T> enumerable => new ResetChange<T>(enumerable),
-		_ => throw new ArgumentOutOfRangeException(nameof(args))
-	};
+		var oldItems = GetItems(args.OldItems);
+		var newItems = GetItems(args.NewItems);
+		return new Change<T>
+		{
+			OldItems = oldItems,
+			OldItemsStartIndex = args.OldStartingIndex,
+			NewItems = newItems,
+			NewItemsStartIndex = args.NewStartingIndex,
+			Reset = args.Action == NotifyCollectionChangedAction.Reset
+		};
+	}
 
-	public void Dispose()
+	private static IReadOnlyCollection<T> GetItems(IList? list)
 	{
-		if (_disposed)
-			return;
-		_collection.CollectionChanged -= OnCollectionChanged;
-		_disposed = true;
+		if (list == null)
+			return ReadOnlyCollection<T>.Empty;
+		return list.Cast<T>().ToList();
 	}
 }

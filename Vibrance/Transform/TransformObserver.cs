@@ -39,82 +39,39 @@ internal sealed class TransformObserver<TSource, TDestination> : IObserver<Chang
 	private readonly IObserver<Change<TDestination>> _observer;
 	private readonly List<TDestination> _transformedItems = new();
 
-	private Change<TDestination> HandleChange(Change<TSource> change)
+	private void HandleChange(Change<TSource> change)
 	{
-		if (change is AddItemChange<TSource> addItemChange)
-		{
-			var transformed = Transform(addItemChange.Item);
-			_transformedItems.Insert(addItemChange.Index, transformed);
-			return new AddItemChange<TDestination>(transformed, addItemChange.Index);
-		}
-		if (change is AddRangeChange<TSource> addRangeChange)
-		{
-			var transformed = Transform(addRangeChange.Items).ToList();
-			_transformedItems.InsertRange(addRangeChange.Count, transformed);
-			return new AddRangeChange<TDestination>(transformed, addRangeChange.StartIndex, addRangeChange.Count);
-		}
-		if (change is AggregateChange<TSource> aggregateChange)
-		{
-			var transformed = aggregateChange.Changes.Select(HandleChange).ToList();
-			return new AggregateChange<TDestination>(transformed);
-		}
-		if (change is MoveItemChange<TSource> moveItemChange)
-		{
-			var transformed = _transformedItems[moveItemChange.OldIndex];
-			_transformedItems.RemoveAt(moveItemChange.OldIndex);
-			_transformedItems.Insert(moveItemChange.NewIndex, transformed);
-			return new MoveItemChange<TDestination>(transformed, moveItemChange.OldIndex, moveItemChange.NewIndex);
-		}
-		if (change is MoveRangeChange<TSource> moveRangeChange)
-		{
-			var transformed = _transformedItems.GetRange(moveRangeChange.OldStartIndex, moveRangeChange.Count);
-			var modifiedNewStartIndex = moveRangeChange.NewStartIndex;
-			transformed.RemoveRange(moveRangeChange.OldStartIndex, moveRangeChange.Count);
-			if (moveRangeChange.NewStartIndex > moveRangeChange.OldStartIndex)
-				modifiedNewStartIndex -= moveRangeChange.Count;
-			_transformedItems.InsertRange(modifiedNewStartIndex, transformed);
-			return new MoveRangeChange<TDestination>(
-				transformed,
-				moveRangeChange.OldStartIndex,
-				moveRangeChange.NewStartIndex,
-				moveRangeChange.Count);
-		}
-		if (change is RemoveItemChange<TSource> removeItemChange)
-		{
-			var transformed = _transformedItems[removeItemChange.Index];
-			_transformedItems.RemoveAt(removeItemChange.Index);
-			return new RemoveItemChange<TDestination>(transformed, removeItemChange.Index);
-		}
-		if (change is RemoveRangeChange<TSource> removeRangeChange)
-		{
-			var transformed = _transformedItems.GetRange(removeRangeChange.StartIndex, removeRangeChange.Count);
-			_transformedItems.RemoveRange(removeRangeChange.StartIndex, removeRangeChange.Count);
-			return new RemoveRangeChange<TDestination>(transformed, removeRangeChange.StartIndex, removeRangeChange.Count);
-		}
-		if (change is ReplaceItemChange<TSource> replaceItemChange)
-		{
-			var oldTransformedItem = _transformedItems[replaceItemChange.Index];
-			var newTransformedItem = Transform(replaceItemChange.NewItem);
-			_transformedItems[replaceItemChange.Index] = newTransformedItem;
-			return new ReplaceItemChange<TDestination>(newTransformedItem, oldTransformedItem, replaceItemChange.Index);
-		}
-		if (change is ResetChange<TSource> resetChange)
-		{
-			_transformedItems.Clear();
-			var transformed = Transform(resetChange.Items).ToList();
-			_transformedItems.AddRange(transformed);
-			return new ResetChange<TDestination>(transformed);
-		}
-		throw new ArgumentOutOfRangeException(nameof(change), change, null);
+		var transformedChange = Transform(change);
+		ApplyChangeToLocalList(transformedChange);
+		_observer.OnNext(transformedChange);
 	}
 
-	private IEnumerable<TDestination> Transform(IEnumerable<TSource> items)
+	private Change<TDestination> Transform(Change<TSource> change) => new()
 	{
-		return items.Select(Transform);
+		OldItems = _transformedItems.GetRange(change.OldItemsStartIndex, change.OldItems.Count),
+		OldItemsStartIndex = change.OldItemsStartIndex,
+		NewItems = Transform(change.NewItems),
+		NewItemsStartIndex = change.NewItemsStartIndex,
+		Reset = change.Reset
+	};
+
+	private IReadOnlyCollection<TDestination> Transform(IReadOnlyCollection<TSource> items)
+	{
+		return items.Select(Transform).ToList();
 	}
 
 	private TDestination Transform(TSource item)
 	{
 		return _selector(item);
+	}
+
+	private void ApplyChangeToLocalList(Change<TDestination> change)
+	{
+		if (change.Reset)
+			_transformedItems.Clear();
+		else if (change.OldItems.Count > 0)
+			_transformedItems.RemoveRange(change.OldItemsStartIndex, change.OldItems.Count);
+		if (change.NewItems.Count > 0)
+			_transformedItems.AddRange(change.NewItems);
 	}
 }
