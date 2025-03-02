@@ -70,6 +70,6 @@ internal sealed class TransformObserver<TSource, TDestination> : IObserver<Chang
 		else if (change.OldItems.Count > 0)
 			_transformedItems.RemoveRange(change.OldItemsStartIndex, change.OldItems.Count);
 		if (change.NewItems.Count > 0)
-			_transformedItems.AddRange(change.NewItems);
+			_transformedItems.InsertRange(change.NewItemsStartIndex, change.NewItems);
 	}
 }
