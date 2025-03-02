@@ -1,3 +1,4 @@
 ﻿<Solution>
+  <Project Path="Vibrance.Tests\Vibrance.Tests.csproj" Type="Classic C#" />
   <Project Path="Vibrance\Vibrance.csproj" Type="Classic C#" />
 </Solution>
