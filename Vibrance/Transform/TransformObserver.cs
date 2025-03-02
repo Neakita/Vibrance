@@ -1,5 +1,3 @@
-using Vibrance.Changes;
-
 namespace Vibrance.Transform;
 
 internal sealed class TransformObserver<TSource, TDestination> : IObserver<Change<TSource>>, IDisposable
