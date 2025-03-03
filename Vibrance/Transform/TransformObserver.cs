@@ -66,6 +66,8 @@ internal sealed class TransformObserver<TSource, TDestination> : IObserver<Chang
 
 	private IReadOnlyCollection<TDestination> Transform(IReadOnlyCollection<TSource> items)
 	{
+		if (items.Count == 0)
+			return ReadOnlyCollection<TDestination>.Empty;
 		return items.Select(Transform).ToList();
 	}
 
