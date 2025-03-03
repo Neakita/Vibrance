@@ -1,5 +1,4 @@
 using FluentAssertions;
-using NSubstitute;
 
 namespace Vibrance.Tests;
 
@@ -20,26 +19,26 @@ public sealed class SourceListTests
 		SourceList<int> list = new();
 		IReadOnlyCollection<int> items = [1, 2, 4];
 		list.AddRange(items);
-		using var subscription = list.ObserveChanges(out var observer);
-		observer.Received().OnNext(Arg.Is<Change<int>>(change => change.NewItems.SequenceEqual(items)));
+		using var observer = list.ObserveChanges();
+		observer.LastObservedValue.NewItems.Should().BeEquivalentTo(items);
 	}
 
 	[Fact]
 	public void ShouldNotObserveAnythingWhenSubscribingOnEmpty()
 	{
 		SourceList<int> list = new();
-		using var subscription = list.ObserveChanges(out var observer);
-		observer.DidNotReceive().OnNext(Arg.Any<Change<int>>());
+		using var observer = list.ObserveChanges();
+		observer.ObservedValues.Should().BeEmpty();
 	}
 
 	[Fact]
 	public void ShouldObserveNewItem()
 	{
 		SourceList<int> list = new();
-		using var subscription = list.ObserveChanges(out var observer);
+		using var observer = list.ObserveChanges();
 		const int item = 5;
 		list.Add(item);
-		observer.Received().OnNext(Arg.Is<Change<int>>(change => change.NewItems.Single() == item));
+		observer.LastObservedValue.NewItems.Should().Contain(item);
 	}
 
 	[Fact]
@@ -132,28 +131,30 @@ public sealed class SourceListTests
 	public void ShouldObserveRemovedItems()
 	{
 		SourceList<int> list = [1, 2, 3, 4, 5];
-		using var subscription = list.ObserveChanges(out var observer);
+		using var observer = list.ObserveChanges();
 		list.RemoveRange(2, 2);
 		IEnumerable<int> removedItems = [3, 4];
-		observer.Received().OnNext(Arg.Is<Change<int>>(change => change.OldItems.SequenceEqual(removedItems) && change.OldItemsStartIndex == 2));
+		observer.LastObservedValue.OldItems.Should().BeEquivalentTo(removedItems);
+		observer.LastObservedValue.OldItemsStartIndex.Should().Be(2);
 	}
 
 	[Fact]
 	public void ShouldObserveInsertedItems()
 	{
 		SourceList<int> list = [1, 2, 3];
-		using var subscription = list.ObserveChanges(out var observer);
+		using var observer = list.ObserveChanges();
 		IReadOnlyCollection<int> newItems = [4, 5];
 		list.InsertRange(2, newItems);
-		observer.Received().OnNext(Arg.Is<Change<int>>(change => change.NewItems.SequenceEqual(newItems) && change.NewItemsStartIndex == 2));
+		observer.LastObservedValue.NewItems.Should().BeEquivalentTo(newItems);
+		observer.LastObservedValue.NewItemsStartIndex.Should().Be(2);
 	}
 
 	[Fact]
 	public void ShouldObserverResetWhenClearing()
 	{
 		SourceList<int> list = [1, 2, 3];
-		using var subscription = list.ObserveChanges(out var observer);
+		using var observer = list.ObserveChanges();
 		list.Clear();
-		observer.Received().OnNext(Arg.Is<Change<int>>(change => change.Reset));
+		observer.LastObservedValue.Reset.Should().BeTrue();
 	}
 }

@@ -1,4 +1,4 @@
-using NSubstitute;
+using FluentAssertions;
 
 namespace Vibrance.Tests;
 
@@ -9,9 +9,9 @@ public sealed class TransformTests
 	{
 		SourceList<int> list = [1, 2, 3];
 		var transformedChanges = list.Transform(number => number.ToString());
-		using var subscription = transformedChanges.ObserveChanges(out var observer);
+		using var observer = transformedChanges.ObserveChanges();
 		IEnumerable<string> expectedItems = ["1", "2", "3"];
-		observer.Received().OnNext(Arg.Is<Change<string>>(change => change.NewItems.SequenceEqual(expectedItems)));
+		observer.LastObservedValue.NewItems.Should().BeEquivalentTo(expectedItems);
 	}
 
 	[Fact]
@@ -19,9 +19,9 @@ public sealed class TransformTests
 	{
 		SourceList<int> list = [1, 2, 3];
 		var transformedChanges = list.Transform(number => number.ToString());
-		using var subscription = transformedChanges.ObserveChanges(out var observer);
+		using var observer = transformedChanges.ObserveChanges();
 		list.Clear();
-		observer.Received().OnNext(Arg.Is<Change<string>>(change => change.Reset));
+		observer.LastObservedValue.Reset.Should().BeTrue();
 	}
 
 	[Fact]
@@ -29,9 +29,9 @@ public sealed class TransformTests
 	{
 		SourceList<int> list = [1, 2, 3];
 		var transformedChanges = list.Transform(number => number.ToString());
-		using var subscription = transformedChanges.ObserveChanges(out var observer);
+		using var observer = transformedChanges.ObserveChanges();
 		list.RemoveRange(0, 2);
 		IEnumerable<string> expectedRemovedItems = ["1", "2"];
-		observer.Received().OnNext(Arg.Is<Change<string>>(change => change.OldItems.SequenceEqual(expectedRemovedItems)));
+		observer.LastObservedValue.OldItems.Should().BeEquivalentTo(expectedRemovedItems);
 	}
 }
