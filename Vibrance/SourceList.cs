@@ -2,7 +2,7 @@ using System.Collections;
 
 namespace Vibrance;
 
-public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Change<T>>
+public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Change<T>>, InnerListProvider<T>
 {
 	public int Count => _items.Count;
 
@@ -36,6 +36,8 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Chan
 			NotifyObservers(change);
 		}
 	}
+
+	IReadOnlyList<T> InnerListProvider<T>.Inner => _items;
 
 	public SourceList()
 	{

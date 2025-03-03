@@ -10,4 +10,24 @@ public static class ObservableChangesExtensions
 	{
 		return new ChangesTransformer<TSource, TDestination>(source, selector);
 	}
+
+	public static IDisposable ToObservableList<T>(this IObservable<Change<T>> source, out ReadOnlyObservableList<T> result)
+	{
+		PostponedConfigurableObserver<Change<T>> subscriptionObserver = new();
+		var subscription = source.Subscribe(subscriptionObserver);
+		var innerListProvider = source as InnerListProvider<T> ?? subscription as InnerListProvider<T>;
+		ChangesHandler<T> changesHandler;
+		if (innerListProvider != null)
+		{
+			ChangeToNotifyCollectionAdapter<T> adapter = new(innerListProvider.Inner);
+			changesHandler = adapter;
+			result = adapter;
+		}
+		else
+		{
+			throw new NotImplementedException();
+		}
+		subscriptionObserver.Observer = new ChangesHandlerObserver<T>(changesHandler);
+		return subscription;
+	}
 }
