@@ -25,7 +25,9 @@ public static class ObservableChangesExtensions
 		}
 		else
 		{
-			throw new NotImplementedException();
+			ObservableList<T> observableList = new();
+			changesHandler = observableList;
+			result = observableList;
 		}
 		subscriptionObserver.Observer = new ChangesHandlerObserver<T>(changesHandler);
 		return subscription;
