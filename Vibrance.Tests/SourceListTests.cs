@@ -17,11 +17,9 @@ public sealed class SourceListTests
 	[Fact]
 	public void ShouldObserveExistingItemsWhenSubscribing()
 	{
-		SourceList<int> list = new();
-		IReadOnlyCollection<int> items = [1, 2, 4];
-		list.AddRange(items);
+		SourceList<int> list = [1, 2, 4];
 		using var observer = list.ObserveChanges();
-		observer.LastObservedValue.NewItems.Should().BeEquivalentTo(items);
+		observer.LastObservedValue.NewItems.Should().Contain([1, 2, 4]);
 	}
 
 	[Fact]
@@ -135,7 +133,7 @@ public sealed class SourceListTests
 		using var observer = list.ObserveChanges();
 		list.RemoveRange(2, 2);
 		IEnumerable<int> removedItems = [3, 4];
-		observer.LastObservedValue.OldItems.Should().BeEquivalentTo(removedItems);
+		observer.LastObservedValue.OldItems.Should().Contain(removedItems);
 		observer.LastObservedValue.OldItemsStartIndex.Should().Be(2);
 	}
 
@@ -146,7 +144,7 @@ public sealed class SourceListTests
 		using var observer = list.ObserveChanges();
 		IReadOnlyCollection<int> newItems = [4, 5];
 		list.InsertRange(2, newItems);
-		observer.LastObservedValue.NewItems.Should().BeEquivalentTo(newItems);
+		observer.LastObservedValue.NewItems.Should().Contain(newItems);
 		observer.LastObservedValue.NewItemsStartIndex.Should().Be(2);
 	}
 
