@@ -127,4 +127,33 @@ public sealed class SourceListTests
 		list.Clear();
 		list.Should().BeEmpty();
 	}
+
+	[Fact]
+	public void ShouldObserveRemovedItems()
+	{
+		SourceList<int> list = [1, 2, 3, 4, 5];
+		using var subscription = list.ObserverChanges(out var observer);
+		list.RemoveRange(2, 2);
+		IEnumerable<int> removedItems = [3, 4];
+		observer.Received().OnNext(Arg.Is<Change<int>>(change => change.OldItems.SequenceEqual(removedItems) && change.OldItemsStartIndex == 2));
+	}
+
+	[Fact]
+	public void ShouldObserveInsertedItems()
+	{
+		SourceList<int> list = [1, 2, 3];
+		using var subscription = list.ObserverChanges(out var observer);
+		IReadOnlyCollection<int> newItems = [4, 5];
+		list.InsertRange(2, newItems);
+		observer.Received().OnNext(Arg.Is<Change<int>>(change => change.NewItems.SequenceEqual(newItems) && change.NewItemsStartIndex == 2));
+	}
+
+	[Fact]
+	public void ShouldObserverResetWhenClearing()
+	{
+		SourceList<int> list = [1, 2, 3];
+		using var subscription = list.ObserverChanges(out var observer);
+		list.Clear();
+		observer.Received().OnNext(Arg.Is<Change<int>>(change => change.Reset));
+	}
 }
