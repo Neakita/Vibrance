@@ -50,12 +50,19 @@ internal sealed class TransformObserver<TSource, TDestination> : IObserver<Chang
 
 	private Change<TDestination> Transform(Change<TSource> change) => new()
 	{
-		OldItems = _transformedItems.GetRange(change.OldItemsStartIndex, change.OldItems.Count),
+		OldItems = GetExistingItems(change.OldItemsStartIndex, change.OldItems.Count),
 		OldItemsStartIndex = change.OldItemsStartIndex,
 		NewItems = Transform(change.NewItems),
 		NewItemsStartIndex = change.NewItemsStartIndex,
 		Reset = change.Reset
 	};
+
+	private IReadOnlyCollection<TDestination> GetExistingItems(int index, int count)
+	{
+		if (count == 0)
+			return ReadOnlyCollection<TDestination>.Empty;
+		return _transformedItems.GetRange(index, count);
+	}
 
 	private IReadOnlyCollection<TDestination> Transform(IReadOnlyCollection<TSource> items)
 	{
