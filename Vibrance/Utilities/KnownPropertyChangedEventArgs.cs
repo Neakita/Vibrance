@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace Vibrance;
+namespace Vibrance.Utilities;
 
 internal static class KnownPropertyChangedEventArgs
 {

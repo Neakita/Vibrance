@@ -1,4 +1,4 @@
-namespace Vibrance;
+namespace Vibrance.Utilities;
 
 internal sealed class ChangesHandlerObserver<T> : IObserver<Change<T>>
 {

@@ -1,4 +1,4 @@
-namespace Vibrance;
+namespace Vibrance.Utilities;
 
 internal interface ChangesHandler<T>
 {
