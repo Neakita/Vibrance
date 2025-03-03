@@ -1,6 +1,5 @@
 using System.Collections.Specialized;
 using FluentAssertions;
-using NSubstitute;
 
 namespace Vibrance.Tests;
 
@@ -19,19 +18,21 @@ public sealed class ToObservableListTests
 	{
 		SourceList<int> sourceList = [1, 2, 3];
 		using var subscription = sourceList.ToObservableList(out var observableList);
-		var handler = observableList.ObserveNotifications();
+		using var observer = observableList.ObserveNotifications();
 		sourceList.Clear();
-		handler.Received().Invoke(observableList, Arg.Is<NotifyCollectionChangedEventArgs>(args => args.Action == NotifyCollectionChangedAction.Reset));
+		NotifyCollectionChangedEventArgs expectedArgs = new(NotifyCollectionChangedAction.Reset);
+		observer.LastObservedArgs.Should().BeEquivalentTo(expectedArgs);
 	}
 
 	[Fact]
 	public void ShouldObserveReplace()
 	{
-		SourceList<int> sourceList = [1, 2, 3];
+		SourceList<string> sourceList = ["1", "2", "3"];
 		using var subscription = sourceList.ToObservableList(out var observableList);
-		var handler = observableList.ObserveNotifications();
-		sourceList[1] = 4;
-		handler.Received().Invoke(observableList, Arg.Is<NotifyCollectionChangedEventArgs>(args => args.Action == NotifyCollectionChangedAction.Replace && args.OldItems != null && args.OldItems.Contains(2) && args.NewItems != null && args.NewItems.Contains(4) && args.NewStartingIndex == 1));
+		using var observer = observableList.ObserveNotifications();
+		sourceList[1] = "4";
+		NotifyCollectionChangedEventArgs expectedArgs = new(NotifyCollectionChangedAction.Replace, "4", "2", 1);
+		observer.LastObservedArgs.Should().BeEquivalentTo(expectedArgs);
 	}
 
 	[Fact]
@@ -39,9 +40,10 @@ public sealed class ToObservableListTests
 	{
 		SourceList<int> sourceList = [1, 2, 3];
 		using var subscription = sourceList.ToObservableList(out var observableList);
-		var handler = observableList.ObserveNotifications();
+		using var observer = observableList.ObserveNotifications();
 		sourceList.Move(0, 1);
-		handler.Received().Invoke(observableList, Arg.Is<NotifyCollectionChangedEventArgs>(args => args.Action == NotifyCollectionChangedAction.Move && args.OldStartingIndex == 0 && args.NewStartingIndex == 1));
+		NotifyCollectionChangedEventArgs expectedArgs = new(NotifyCollectionChangedAction.Move, 1, 1, 0);
+		observer.LastObservedArgs.Should().BeEquivalentTo(expectedArgs);
 	}
 
 	[Fact]
@@ -49,9 +51,10 @@ public sealed class ToObservableListTests
 	{
 		SourceList<int> sourceList = [1, 2, 3];
 		using var subscription = sourceList.ToObservableList(out var observableList);
-		var handler = observableList.ObserveNotifications();
+		using var observer = observableList.ObserveNotifications();
 		sourceList.RemoveAt(1);
-		handler.Received().Invoke(observableList, Arg.Is<NotifyCollectionChangedEventArgs>(args => args.Action == NotifyCollectionChangedAction.Remove && args.OldStartingIndex == 1 && args.OldItems != null && args.OldItems.Contains(2)));
+		NotifyCollectionChangedEventArgs expectedArgs = new(NotifyCollectionChangedAction.Remove, 2, 1);
+		observer.LastObservedArgs.Should().BeEquivalentTo(expectedArgs);
 	}
 
 	[Fact]
@@ -59,8 +62,9 @@ public sealed class ToObservableListTests
 	{
 		SourceList<int> sourceList = [1, 2, 3];
 		using var subscription = sourceList.ToObservableList(out var observableList);
-		var handler = observableList.ObserveNotifications();
+		using var observer = observableList.ObserveNotifications();
 		sourceList.Insert(1, 4);
-		handler.Received().Invoke(observableList, Arg.Is<NotifyCollectionChangedEventArgs>(args => args.Action == NotifyCollectionChangedAction.Add && args.NewStartingIndex == 1 && args.NewItems != null && args.NewItems.Contains(4)));
+		NotifyCollectionChangedEventArgs expectedArgs = new(NotifyCollectionChangedAction.Add, 4, 1);
+		observer.LastObservedArgs.Should().BeEquivalentTo(expectedArgs);
 	}
 }

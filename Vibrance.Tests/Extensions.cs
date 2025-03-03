@@ -11,10 +11,8 @@ internal static class Extensions
 		return list.Subscribe(observer);
 	}
 
-	public static NotifyCollectionChangedEventHandler ObserveNotifications(this INotifyCollectionChanged notifyCollection)
+	public static NotifyCollectionObserver ObserveNotifications(this INotifyCollectionChanged notifyCollection)
 	{
-		var handler = Substitute.For<NotifyCollectionChangedEventHandler>();
-		notifyCollection.CollectionChanged += handler;
-		return handler;
+		return new NotifyCollectionObserver(notifyCollection);
 	}
 }
