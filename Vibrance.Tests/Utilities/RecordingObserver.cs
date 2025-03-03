@@ -1,4 +1,4 @@
-namespace Vibrance.Tests;
+namespace Vibrance.Tests.Utilities;
 
 internal sealed class RecordingObserver<T> : IObserver<T>, IDisposable
 {

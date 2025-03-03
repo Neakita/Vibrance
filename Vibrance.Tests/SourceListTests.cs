@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Vibrance.Tests.Utilities;
 
 namespace Vibrance.Tests;
 

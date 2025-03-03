@@ -1,5 +1,6 @@
 using System.Collections.Specialized;
 using FluentAssertions;
+using Vibrance.Tests.Utilities;
 
 namespace Vibrance.Tests;
 

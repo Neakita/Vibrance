@@ -1,6 +1,6 @@
 using System.Collections.Specialized;
 
-namespace Vibrance.Tests;
+namespace Vibrance.Tests.Utilities;
 
 internal sealed class NotifyCollectionObserver : IDisposable
 {
