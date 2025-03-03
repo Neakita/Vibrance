@@ -4,7 +4,6 @@ namespace Vibrance.Tests;
 
 internal sealed class NotifyCollectionObserver : IDisposable
 {
-	public IReadOnlyCollection<NotifyCollectionChangedEventArgs> ObservedArgs => _observedArgs;
 	public NotifyCollectionChangedEventArgs LastObservedArgs => _observedArgs.Last();
 	
 	public NotifyCollectionObserver(INotifyCollectionChanged notifyCollection)
