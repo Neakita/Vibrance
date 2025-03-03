@@ -1,4 +1,6 @@
 using System.Collections.Specialized;
+using System.Reactive.Concurrency;
+using System.Reactive.Linq;
 using FluentAssertions;
 using Vibrance.Tests.Utilities;
 
@@ -67,5 +69,17 @@ public sealed class ToObservableListTests
 		sourceList.Insert(1, 4);
 		NotifyCollectionChangedEventArgs expectedArgs = new(NotifyCollectionChangedAction.Add, 4, 1);
 		observer.LastObservedArgs.Should().BeEquivalentTo(expectedArgs);
+	}
+
+	[Fact]
+	public void ShouldObserveOnOtherThread()
+	{
+		SourceList<int> sourceList = new();
+		using var subscription = sourceList.ObserveOn(ThreadPoolScheduler.Instance).ToObservableList(out var observableList);
+		using var observer = observableList.ObserveNotifications();
+		sourceList.AddRange([1, 2, 3]);
+		Thread.Sleep(3);
+		observer.LastObservedArgs.NewItems.Should().NotBeNull();
+		observer.LastObservedArgs.NewItems.Cast<int>().Should().Contain([1, 2, 3]);
 	}
 }

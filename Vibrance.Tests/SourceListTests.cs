@@ -1,3 +1,5 @@
+using System.Reactive.Concurrency;
+using System.Reactive.Linq;
 using FluentAssertions;
 using Vibrance.Tests.Utilities;
 
@@ -155,5 +157,15 @@ public sealed class SourceListTests
 		using var observer = list.ObserveChanges();
 		list.Clear();
 		observer.LastObservedValue.Reset.Should().BeTrue();
+	}
+
+	[Fact]
+	public void ShouldObserveOnOtherThread()
+	{
+		SourceList<int> list = new();
+		using var observer = list.ObserveOn(ThreadPoolScheduler.Instance).ObserveChanges();
+		list.AddRange([1, 2, 3]);
+		Thread.Sleep(1);
+		observer.LastObservedValue.NewItems.Should().Contain([1, 2, 3]);
 	}
 }
