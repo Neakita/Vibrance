@@ -18,7 +18,7 @@ internal sealed class ChangeToNotifyCollectionAdapter<T> : ReadOnlyObservableLis
 	{
 		if (CollectionChanged != null)
 		{
-			var args = TranslateChangeToArgs(change);
+			var args = change.ToNotifyCollectionArgs();
 			CollectionChanged.Invoke(this, args);
 		}
 		if (change.OldItems.Count != change.NewItems.Count)
@@ -41,35 +41,4 @@ internal sealed class ChangeToNotifyCollectionAdapter<T> : ReadOnlyObservableLis
 	public T this[int index] => _list[index];
 
 	private readonly IReadOnlyList<T> _list;
-
-	private static NotifyCollectionChangedEventArgs TranslateChangeToArgs(Change<T> change)
-	{
-		return change switch
-		{
-			{ Reset: true } => new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset),
-			{ OldItems.Count: > 0, NewItems.Count: > 0 } when change.OldItemsStartIndex == change.NewItemsStartIndex =>
-				new NotifyCollectionChangedEventArgs(
-					NotifyCollectionChangedAction.Replace,
-					(IList)change.NewItems,
-					(IList)change.OldItems,
-					change.NewItemsStartIndex),
-			{ OldItems.Count: > 0, NewItems.Count: > 0 } when ReferenceEquals(change.OldItems, change.NewItems) || change.OldItems.SequenceEqual(change.NewItems) =>
-				new NotifyCollectionChangedEventArgs(
-					NotifyCollectionChangedAction.Move,
-					(IList)change.NewItems,
-					change.NewItemsStartIndex,
-					change.OldItemsStartIndex),
-			{ OldItems.Count: > 0 } =>
-				new NotifyCollectionChangedEventArgs(
-					NotifyCollectionChangedAction.Remove,
-					(IList)change.OldItems,
-					change.OldItemsStartIndex),
-			{ NewItems.Count: > 0 } =>
-				new NotifyCollectionChangedEventArgs(
-					NotifyCollectionChangedAction.Add,
-					(IList)change.NewItems,
-					change.NewItemsStartIndex),
-			_ => throw new ArgumentOutOfRangeException(nameof(change), change, null)
-		};
-	}
 }

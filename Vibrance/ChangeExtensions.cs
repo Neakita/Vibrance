@@ -1,3 +1,6 @@
+using System.Collections;
+using System.Collections.Specialized;
+
 namespace Vibrance;
 
 internal static class ChangeExtensions
@@ -11,4 +14,32 @@ internal static class ChangeExtensions
 		if (change.NewItems.Count > 0)
 			list.InsertRange(change.NewItemsStartIndex, change.NewItems);
 	}
+
+	public static NotifyCollectionChangedEventArgs ToNotifyCollectionArgs<T>(this Change<T> change) => change switch
+	{
+		{ Reset: true } => new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset),
+		{ OldItems.Count: > 0, NewItems.Count: > 0 } when change.OldItemsStartIndex == change.NewItemsStartIndex =>
+			new NotifyCollectionChangedEventArgs(
+				NotifyCollectionChangedAction.Replace,
+				(IList)change.NewItems,
+				(IList)change.OldItems,
+				change.NewItemsStartIndex),
+		{ OldItems.Count: > 0, NewItems.Count: > 0 } when ReferenceEquals(change.OldItems, change.NewItems) || change.OldItems.SequenceEqual(change.NewItems) =>
+			new NotifyCollectionChangedEventArgs(
+				NotifyCollectionChangedAction.Move,
+				(IList)change.NewItems,
+				change.NewItemsStartIndex,
+				change.OldItemsStartIndex),
+		{ OldItems.Count: > 0 } =>
+			new NotifyCollectionChangedEventArgs(
+				NotifyCollectionChangedAction.Remove,
+				(IList)change.OldItems,
+				change.OldItemsStartIndex),
+		{ NewItems.Count: > 0 } =>
+			new NotifyCollectionChangedEventArgs(
+				NotifyCollectionChangedAction.Add,
+				(IList)change.NewItems,
+				change.NewItemsStartIndex),
+		_ => throw new ArgumentOutOfRangeException(nameof(change), change, null)
+	};
 }
