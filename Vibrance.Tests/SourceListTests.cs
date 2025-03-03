@@ -20,7 +20,7 @@ public sealed class SourceListTests
 		SourceList<int> list = new();
 		IReadOnlyCollection<int> items = [1, 2, 4];
 		list.AddRange(items);
-		using var subscription = list.ObserverChanges(out var observer);
+		using var subscription = list.ObserveChanges(out var observer);
 		observer.Received().OnNext(Arg.Is<Change<int>>(change => change.NewItems.SequenceEqual(items)));
 	}
 
@@ -28,7 +28,7 @@ public sealed class SourceListTests
 	public void ShouldNotObserveAnythingWhenSubscribingOnEmpty()
 	{
 		SourceList<int> list = new();
-		using var subscription = list.ObserverChanges(out var observer);
+		using var subscription = list.ObserveChanges(out var observer);
 		observer.DidNotReceive().OnNext(Arg.Any<Change<int>>());
 	}
 
@@ -36,7 +36,7 @@ public sealed class SourceListTests
 	public void ShouldObserveNewItem()
 	{
 		SourceList<int> list = new();
-		using var subscription = list.ObserverChanges(out var observer);
+		using var subscription = list.ObserveChanges(out var observer);
 		const int item = 5;
 		list.Add(item);
 		observer.Received().OnNext(Arg.Is<Change<int>>(change => change.NewItems.Single() == item));
@@ -132,7 +132,7 @@ public sealed class SourceListTests
 	public void ShouldObserveRemovedItems()
 	{
 		SourceList<int> list = [1, 2, 3, 4, 5];
-		using var subscription = list.ObserverChanges(out var observer);
+		using var subscription = list.ObserveChanges(out var observer);
 		list.RemoveRange(2, 2);
 		IEnumerable<int> removedItems = [3, 4];
 		observer.Received().OnNext(Arg.Is<Change<int>>(change => change.OldItems.SequenceEqual(removedItems) && change.OldItemsStartIndex == 2));
@@ -142,7 +142,7 @@ public sealed class SourceListTests
 	public void ShouldObserveInsertedItems()
 	{
 		SourceList<int> list = [1, 2, 3];
-		using var subscription = list.ObserverChanges(out var observer);
+		using var subscription = list.ObserveChanges(out var observer);
 		IReadOnlyCollection<int> newItems = [4, 5];
 		list.InsertRange(2, newItems);
 		observer.Received().OnNext(Arg.Is<Change<int>>(change => change.NewItems.SequenceEqual(newItems) && change.NewItemsStartIndex == 2));
@@ -152,7 +152,7 @@ public sealed class SourceListTests
 	public void ShouldObserverResetWhenClearing()
 	{
 		SourceList<int> list = [1, 2, 3];
-		using var subscription = list.ObserverChanges(out var observer);
+		using var subscription = list.ObserveChanges(out var observer);
 		list.Clear();
 		observer.Received().OnNext(Arg.Is<Change<int>>(change => change.Reset));
 	}

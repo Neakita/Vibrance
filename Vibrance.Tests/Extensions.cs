@@ -4,9 +4,9 @@ namespace Vibrance.Tests;
 
 internal static class Extensions
 {
-	public static IDisposable ObserverChanges(this SourceList<int> list, out IObserver<Change<int>> observer)
+	public static IDisposable ObserveChanges<T>(this IObservable<Change<T>> list, out IObserver<Change<T>> observer)
 	{
-		observer = Substitute.For<IObserver<Change<int>>>();
+		observer = Substitute.For<IObserver<Change<T>>>();
 		return list.Subscribe(observer);
 	}
 }
