@@ -1,7 +1,11 @@
+using System.Collections.ObjectModel;
+
 namespace Vibrance.Transform;
 
-internal sealed class TransformObserver<TSource, TDestination> : IObserver<Change<TSource>>, IDisposable
+internal sealed class TransformObserver<TSource, TDestination> : IObserver<Change<TSource>>, InnerListProvider<TDestination>, IDisposable
 {
+	IReadOnlyList<TDestination> InnerListProvider<TDestination>.Inner => _transformedItems;
+
 	public TransformObserver(
 		IObservable<Change<TSource>> source,
 		Func<TSource, TDestination> selector,
