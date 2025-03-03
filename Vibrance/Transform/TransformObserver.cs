@@ -44,7 +44,7 @@ internal sealed class TransformObserver<TSource, TDestination> : IObserver<Chang
 	private void HandleChange(Change<TSource> change)
 	{
 		var transformedChange = Transform(change);
-		ApplyChangeToLocalList(transformedChange);
+		transformedChange.ApplyToList(_transformedItems);
 		_observer.OnNext(transformedChange);
 	}
 
@@ -65,15 +65,5 @@ internal sealed class TransformObserver<TSource, TDestination> : IObserver<Chang
 	private TDestination Transform(TSource item)
 	{
 		return _selector(item);
-	}
-
-	private void ApplyChangeToLocalList(Change<TDestination> change)
-	{
-		if (change.Reset)
-			_transformedItems.Clear();
-		else if (change.OldItems.Count > 0)
-			_transformedItems.RemoveRange(change.OldItemsStartIndex, change.OldItems.Count);
-		if (change.NewItems.Count > 0)
-			_transformedItems.InsertRange(change.NewItemsStartIndex, change.NewItems);
 	}
 }
