@@ -57,14 +57,14 @@ internal sealed class TransformObserver<TSource, TDestination> : IObserver<Chang
 		Reset = change.Reset
 	};
 
-	private IReadOnlyCollection<TDestination> GetExistingItems(int index, int count)
+	private IReadOnlyList<TDestination> GetExistingItems(int index, int count)
 	{
 		if (count == 0)
 			return ReadOnlyCollection<TDestination>.Empty;
 		return _transformedItems.GetRange(index, count);
 	}
 
-	private IReadOnlyCollection<TDestination> Transform(IReadOnlyCollection<TSource> items)
+	private IReadOnlyList<TDestination> Transform(IReadOnlyCollection<TSource> items)
 	{
 		if (items.Count == 0)
 			return ReadOnlyCollection<TDestination>.Empty;

@@ -45,7 +45,7 @@ internal sealed class NotifyCollectionSubscription<T> : IDisposable
 		};
 	}
 
-	private static IReadOnlyCollection<T> GetItems(IList? list)
+	private static IReadOnlyList<T> GetItems(IList? list)
 	{
 		if (list == null)
 			return ReadOnlyCollection<T>.Empty;

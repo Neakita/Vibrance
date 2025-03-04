@@ -155,7 +155,7 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Chan
 		var item = _items[oldIndex];
 		_items.RemoveAt(oldIndex);
 		_items.Insert(newIndex, item);
-		IReadOnlyCollection<T> itemAsCollection = [item];
+		IReadOnlyList<T> itemAsCollection = [item];
 		Change<T> change = new()
 		{
 			OldItems = itemAsCollection,
