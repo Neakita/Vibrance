@@ -70,12 +70,13 @@ internal sealed class SortSubscription<T> : IObserver<Change<T>>, IDisposable
 			var sourceIndex = value.OldItemsStartIndex + i;
 			var sortedIndex = _sourceToSortedIndexLookup[sourceIndex];
 			_sorted.RemoveAt(sortedIndex);
-			RemoveIndexFromLookup(sourceIndex, sortedIndex);
+			RemoveIndexFromLookup(sourceIndex);
 		}
 	}
 
-	private void RemoveIndexFromLookup(int sourceIndex, int sortedIndex)
+	private void RemoveIndexFromLookup(int sourceIndex)
 	{
+		var sortedIndex = _sourceToSortedIndexLookup[sourceIndex];
 		_sourceToSortedIndexLookup.RemoveAt(sourceIndex);
 		ShiftIndexesLookupForRemoval(sortedIndex);
 	}
