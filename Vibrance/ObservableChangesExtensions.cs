@@ -1,3 +1,4 @@
+using Vibrance.Sort;
 using Vibrance.Transform;
 using Vibrance.Utilities;
 
@@ -32,5 +33,10 @@ public static class ObservableChangesExtensions
 		}
 		subscriptionObserver.Observer = new ChangesHandlerObserver<T>(changesHandler);
 		return subscription;
+	}
+
+	public static IObservable<Change<T>> Sort<T>(this IObservable<Change<T>> source, IComparer<T>? comparer = null)
+	{
+		return new ChangesSorter<T>(source, comparer ?? Comparer<T>.Default);
 	}
 }
