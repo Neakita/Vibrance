@@ -2,6 +2,7 @@ using System.Collections.Specialized;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using FluentAssertions;
+using Vibrance.Changes;
 using Vibrance.Tests.Utilities;
 
 namespace Vibrance.Tests;

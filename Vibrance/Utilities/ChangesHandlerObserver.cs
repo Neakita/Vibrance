@@ -1,3 +1,5 @@
+using Vibrance.Changes;
+
 namespace Vibrance.Utilities;
 
 internal sealed class ChangesHandlerObserver<T> : IObserver<Change<T>>

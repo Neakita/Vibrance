@@ -1,3 +1,4 @@
+using Vibrance.Changes;
 using Vibrance.Utilities;
 using Range = Vibrance.Utilities.Range;
 

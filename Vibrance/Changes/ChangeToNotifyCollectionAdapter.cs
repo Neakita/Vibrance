@@ -3,7 +3,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using Vibrance.Utilities;
 
-namespace Vibrance;
+namespace Vibrance.Changes;
 
 internal sealed class ChangeToNotifyCollectionAdapter<T> : ReadOnlyObservableList<T>, ChangesHandler<T>
 {

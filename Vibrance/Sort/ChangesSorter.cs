@@ -1,3 +1,5 @@
+using Vibrance.Changes;
+
 namespace Vibrance.Sort;
 
 internal sealed class ChangesSorter<T> : IObservable<Change<T>>

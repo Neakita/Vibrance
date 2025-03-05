@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
 
-namespace Vibrance;
+namespace Vibrance.Changes;
 
 public sealed class Change<T>
 {

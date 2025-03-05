@@ -1,3 +1,5 @@
+using Vibrance.Changes;
+
 namespace Vibrance.Utilities;
 
 internal interface ChangesHandler<T>

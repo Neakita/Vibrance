@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Specialized;
 
-namespace Vibrance;
+namespace Vibrance.Changes;
 
 internal static class ChangeExtensions
 {

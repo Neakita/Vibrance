@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Vibrance.Changes;
 using Vibrance.Sort;
 using Vibrance.Tests.Utilities;
 

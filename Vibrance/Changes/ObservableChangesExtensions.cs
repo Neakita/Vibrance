@@ -3,7 +3,7 @@ using Vibrance.Sort;
 using Vibrance.Transform;
 using Vibrance.Utilities;
 
-namespace Vibrance;
+namespace Vibrance.Changes;
 
 public static class ObservableChangesExtensions
 {

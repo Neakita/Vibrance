@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using Vibrance.Changes;
 using Vibrance.Utilities;
 
 namespace Vibrance;

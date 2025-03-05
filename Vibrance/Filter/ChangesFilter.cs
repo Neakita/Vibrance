@@ -1,3 +1,5 @@
+using Vibrance.Changes;
+
 namespace Vibrance.Filter;
 
 internal sealed class ChangesFilter<T> : IObservable<Change<T>>
