@@ -4,15 +4,16 @@ internal sealed class RecordingObserver<T> : IObserver<T>, IDisposable
 {
 	public IReadOnlyCollection<T> ObservedValues => _observedValues;
 	public T LastObservedValue => _observedValues.Last();
+	public IDisposable Subscription { get; }
 
 	public RecordingObserver(IObservable<T> observable)
 	{
-		_subscription = observable.Subscribe(this);
+		Subscription = observable.Subscribe(this);
 	}
 
 	public void Dispose()
 	{
-		_subscription.Dispose();
+		Subscription.Dispose();
 	}
 
 	void IObserver<T>.OnNext(T value)
@@ -28,6 +29,5 @@ internal sealed class RecordingObserver<T> : IObserver<T>, IDisposable
 	{
 	}
 
-	private readonly IDisposable _subscription;
 	private readonly List<T> _observedValues = new();
 }
