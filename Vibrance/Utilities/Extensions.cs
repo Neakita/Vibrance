@@ -26,4 +26,12 @@ internal static class Extensions
 	{
 		return list.GetRange(range.Start, range.Count);
 	}
+
+	public static List<T> MoveRange<T>(this List<T> list, int oldIndex, int count, int newIndex)
+	{
+		var items = list.GetRange(oldIndex, count);
+		list.RemoveRange(oldIndex, count);
+		list.InsertRange(newIndex, items);
+		return items;
+	}
 }
