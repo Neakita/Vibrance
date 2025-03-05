@@ -21,8 +21,8 @@ internal sealed class SortSubscription<T> : IObserver<Change<T>>, InnerListProvi
 			HandleMove(value);
 		else
 		{
-			HandleOldItems(value);
-			HandleNewItems(value);
+			HandleOldItems(value.OldItems);
+			HandleNewItems(value.NewItems);
 		}
 	}
 
@@ -51,24 +51,24 @@ internal sealed class SortSubscription<T> : IObserver<Change<T>>, InnerListProvi
 
 	private void HandleMove(Change<T> value)
 	{
-		var oldIndex = value.OldItemsStartIndex;
-		var newIndex = value.NewItemsStartIndex;
+		var oldIndex = value.OldItems.StartIndex;
+		var newIndex = value.NewItems.StartIndex;
 		_sourceToSortedIndexLookup.MoveRange(oldIndex, value.NewItems.Count, newIndex);
 	}
 
-	private void HandleOldItems(Change<T> value)
+	private void HandleOldItems(PositionalReadOnlyList<T> items)
 	{
-		if (value.OldItems.Count == 0)
+		if (items.Count == 0)
 			return;
-		var changes = PrepareDeletionChanges(value);
-		RemoveOrderedItems(value);
+		var changes = PrepareDeletionChanges(items);
+		RemoveOrderedItems(items);
 		NotifyDeletions(changes);
 	}
 
-	private List<Change<T>> PrepareDeletionChanges(Change<T> value)
+	private List<Change<T>> PrepareDeletionChanges(PositionalReadOnlyList<T> items)
 	{
-		return value.OldItems
-			.Select((_, index) => _sourceToSortedIndexLookup[index + value.OldItemsStartIndex])
+		return items
+			.Select((_, index) => _sourceToSortedIndexLookup[index + items.StartIndex])
 			.Order()
 			.ToRanges()
 			.Select(ToChange)
@@ -77,14 +77,14 @@ internal sealed class SortSubscription<T> : IObserver<Change<T>>, InnerListProvi
 
 	private Change<T> ToChange(Range range)
 	{
-		return new Change<T> { OldItems = _sorted.GetRange(range), OldItemsStartIndex = range.Start };
+		return new Change<T> { OldItems = new PositionalReadOnlyList<T>(_sorted.GetRange(range), range.Start)};
 	}
 
-	private void RemoveOrderedItems(Change<T> value)
+	private void RemoveOrderedItems(PositionalReadOnlyList<T> items)
 	{
-		for (var i = value.OldItems.Count - 1; i >= 0; i--)
+		for (var i = items.Count - 1; i >= 0; i--)
 		{
-			var sourceIndex = value.OldItemsStartIndex + i;
+			var sourceIndex = items.StartIndex + i;
 			var sortedIndex = _sourceToSortedIndexLookup[sourceIndex];
 			_sorted.RemoveAt(sortedIndex);
 			RemoveIndexFromLookup(sourceIndex);
@@ -111,20 +111,20 @@ internal sealed class SortSubscription<T> : IObserver<Change<T>>, InnerListProvi
 			_observer.OnNext(change);
 	}
 
-	private void HandleNewItems(Change<T> value)
+	private void HandleNewItems(PositionalReadOnlyList<T> items)
 	{
-		if (value.NewItems.Count == 0)
+		if (items.Count == 0)
 			return;
-		InsertItemsInOrder(value);
-		NotifyNewSortedItems(value);
+		InsertItemsInOrder(items);
+		NotifyNewSortedItems(items);
 	}
 
-	private void InsertItemsInOrder(Change<T> value)
+	private void InsertItemsInOrder(PositionalReadOnlyList<T> items)
 	{
-		for (var i = 0; i < value.NewItems.Count; i++)
+		for (var i = 0; i < items.Count; i++)
 		{
-			var item = value.NewItems[i];
-			var sourceIndex = value.NewItemsStartIndex + i;
+			var item = items[i];
+			var sourceIndex = items.StartIndex + i;
 			var sortedIndex = InsertItemInOrder(item);
 			InsertIndexIntoLookup(sourceIndex, sortedIndex);
 		}
@@ -158,10 +158,10 @@ internal sealed class SortSubscription<T> : IObserver<Change<T>>, InnerListProvi
 				_sourceToSortedIndexLookup[i]++;
 	}
 
-	private void NotifyNewSortedItems(Change<T> value)
+	private void NotifyNewSortedItems(PositionalReadOnlyList<T> items)
 	{
-		var sortedRanges = value.NewItems
-			.Select((_, index) => _sourceToSortedIndexLookup[index + value.NewItemsStartIndex])
+		var sortedRanges = items
+			.Select((_, index) => _sourceToSortedIndexLookup[index + items.StartIndex])
 			.Order()
 			.ToRanges();
 		foreach (var range in sortedRanges)
@@ -169,8 +169,7 @@ internal sealed class SortSubscription<T> : IObserver<Change<T>>, InnerListProvi
 			var sortedRange = _sorted.GetRange(range);
 			Change<T> change = new()
 			{
-				NewItems = sortedRange,
-				NewItemsStartIndex = range.Start
+				NewItems = new PositionalReadOnlyList<T>(sortedRange, range.Start)
 			};
 			_observer.OnNext(change);
 		}

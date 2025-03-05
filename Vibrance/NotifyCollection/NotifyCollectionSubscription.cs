@@ -38,10 +38,8 @@ internal sealed class NotifyCollectionSubscription<T> : IDisposable
 		var newItems = GetItems(args.NewItems);
 		return new Change<T>
 		{
-			OldItems = oldItems,
-			OldItemsStartIndex = args.OldStartingIndex,
-			NewItems = newItems,
-			NewItemsStartIndex = args.NewStartingIndex,
+			OldItems = new PositionalReadOnlyList<T>(oldItems, args.OldStartingIndex),
+			NewItems = new PositionalReadOnlyList<T>(newItems, args.NewStartingIndex),
 			Reset = args.Action == NotifyCollectionChangedAction.Reset
 		};
 	}

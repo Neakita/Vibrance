@@ -25,8 +25,7 @@ internal sealed class NotifyCollectionObservable<T> : IObservable<Change<T>>
 			return;
 		Change<T> change = new()
 		{
-			NewItems = collection.ToList(),
-			NewItemsStartIndex = 0
+			NewItems = new PositionalReadOnlyList<T>(collection.ToList(), 0)
 		};
 		observer.OnNext(change);
 	}

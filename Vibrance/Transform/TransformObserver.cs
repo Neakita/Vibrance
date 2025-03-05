@@ -49,14 +49,17 @@ internal sealed class TransformObserver<TSource, TDestination> : IObserver<Chang
 		_observer.OnNext(transformedChange);
 	}
 
-	private Change<TDestination> Transform(Change<TSource> change) => new()
+	private Change<TDestination> Transform(Change<TSource> change)
 	{
-		OldItems = GetExistingItems(change.OldItemsStartIndex, change.OldItems.Count),
-		OldItemsStartIndex = change.OldItemsStartIndex,
-		NewItems = Transform(change.NewItems),
-		NewItemsStartIndex = change.NewItemsStartIndex,
-		Reset = change.Reset
-	};
+		var oldItems = GetExistingItems(change.OldItems.StartIndex, change.OldItems.Count);
+		var newItems = Transform(change.NewItems);
+		return new Change<TDestination>
+		{
+			OldItems = new PositionalReadOnlyList<TDestination>(oldItems, change.OldItems.StartIndex),
+			NewItems = new PositionalReadOnlyList<TDestination>(newItems, change.NewItems.StartIndex),
+			Reset = change.Reset
+		};
+	}
 
 	private IReadOnlyList<TDestination> GetExistingItems(int index, int count)
 	{

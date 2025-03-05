@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Specialized;
 
 namespace Vibrance.Changes;
@@ -10,42 +9,42 @@ internal static class ChangeExtensions
 		if (change.Reset)
 			list.Clear();
 		else if (change.OldItems.Count > 0)
-			list.RemoveRange(change.OldItemsStartIndex, change.OldItems.Count);
+			list.RemoveRange(change.OldItems.StartIndex, change.OldItems.Count);
 		if (change.NewItems.Count > 0)
-			list.InsertRange(change.NewItemsStartIndex, change.NewItems);
+			list.InsertRange(change.NewItems.StartIndex, change.NewItems);
 	}
 
 	public static NotifyCollectionChangedEventArgs ToNotifyCollectionArgs<T>(this Change<T> change) => change switch
 	{
 		{ Reset: true } => new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset),
-		{ OldItems.Count: > 0, NewItems.Count: > 0 } when change.OldItemsStartIndex == change.NewItemsStartIndex =>
+		{ OldItems.Count: > 0, NewItems.Count: > 0 } when change.OldItems.StartIndex == change.NewItems.StartIndex =>
 			new NotifyCollectionChangedEventArgs(
 				NotifyCollectionChangedAction.Replace,
-				(IList)change.NewItems,
-				(IList)change.OldItems,
-				change.NewItemsStartIndex),
+				change.NewItems.AsList(),
+				change.OldItems.AsList(),
+				change.NewItems.StartIndex),
 		{ OldItems.Count: > 0, NewItems.Count: > 0 } when ReferenceEquals(change.OldItems, change.NewItems) || change.OldItems.SequenceEqual(change.NewItems) =>
 			new NotifyCollectionChangedEventArgs(
 				NotifyCollectionChangedAction.Move,
-				(IList)change.NewItems,
-				change.NewItemsStartIndex,
-				change.OldItemsStartIndex),
+				change.NewItems.AsList(),
+				change.NewItems.StartIndex,
+				change.OldItems.StartIndex),
 		{ OldItems.Count: > 0 } =>
 			new NotifyCollectionChangedEventArgs(
 				NotifyCollectionChangedAction.Remove,
-				(IList)change.OldItems,
-				change.OldItemsStartIndex),
+				change.OldItems.AsList(),
+				change.OldItems.StartIndex),
 		{ NewItems.Count: > 0 } =>
 			new NotifyCollectionChangedEventArgs(
 				NotifyCollectionChangedAction.Add,
-				(IList)change.NewItems,
-				change.NewItemsStartIndex),
+				change.NewItems.AsList(),
+				change.NewItems.StartIndex),
 		_ => throw new ArgumentOutOfRangeException(nameof(change), change, null)
 	};
 
 	internal static bool IsMove<T>(this Change<T> change) =>
 		change.NewItems.Count > 0 &&
 		change.OldItems.Count > 0 &&
-		change.OldItemsStartIndex != change.NewItemsStartIndex &&
+		change.OldItems.StartIndex != change.NewItems.StartIndex &&
 		ReferenceEquals(change.NewItems, change.OldItems) || change.NewItems.SequenceEqual(change.OldItems);
 }

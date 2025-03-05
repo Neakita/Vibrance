@@ -31,7 +31,7 @@ public sealed class SortTests
 		SourceList<int> list = [1, 2, 4];
 		using var observer = list.Sort().ObserveChanges();
 		list.Add(3);
-		observer.LastObservedValue.NewItemsStartIndex.Should().Be(2);
+		observer.LastObservedValue.NewItems.StartIndex.Should().Be(2);
 		CheckDataIntegrity(observer.Subscription, list);
 	}
 
@@ -42,7 +42,7 @@ public sealed class SortTests
 		using var observer = list.Sort().ObserveChanges();
 		list.Remove(2);
 		observer.LastObservedValue.OldItems.Should().Contain(2);
-		observer.LastObservedValue.OldItemsStartIndex.Should().Be(1);
+		observer.LastObservedValue.OldItems.StartIndex.Should().Be(1);
 		CheckDataIntegrity(observer.Subscription, list);
 	}
 
@@ -53,7 +53,7 @@ public sealed class SortTests
 		using var observer = list.Sort().ObserveChanges();
 		list.RemoveRange(1, 2);
 		observer.LastObservedValue.OldItems.Should().Contain([2, 3]);
-		observer.LastObservedValue.OldItemsStartIndex.Should().Be(1);
+		observer.LastObservedValue.OldItems.StartIndex.Should().Be(1);
 		CheckDataIntegrity(observer.Subscription, list);
 	}
 
@@ -63,12 +63,8 @@ public sealed class SortTests
 		SourceList<int> list = [5, 1, 2, 4, 3];
 		using var observer = list.Sort().ObserveChanges();
 		list.RemoveRange(1, 2);
-		Change<int> expectedChange = new()
-		{
-			OldItems = [1, 2],
-			OldItemsStartIndex = 0
-		};
-		observer.LastObservedValue.Should().BeEquivalentTo(expectedChange);
+		observer.LastObservedValue.OldItems.Should().ContainInOrder(1, 2);
+		observer.LastObservedValue.OldItems.StartIndex.Should().Be(0);
 		CheckDataIntegrity(observer.Subscription, list);
 	}
 

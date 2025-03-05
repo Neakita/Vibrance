@@ -30,10 +30,8 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Chan
 			_items[index] = value;
 			Change<T> change = new()
 			{
-				OldItems = [oldItem],
-				OldItemsStartIndex = index,
-				NewItems = [value],
-				NewItemsStartIndex = index
+				OldItems = new PositionalReadOnlyList<T>([oldItem], index),
+				NewItems = new PositionalReadOnlyList<T>([value], index)
 			};
 			NotifyObservers(change);
 		}
@@ -107,8 +105,7 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Chan
 		_items.Insert(index, item);
 		Change<T> change = new()
 		{
-			NewItems = [item],
-			NewItemsStartIndex = index
+			NewItems = new PositionalReadOnlyList<T>([item], index)
 		};
 		NotifyObservers(change);
 	}
@@ -119,8 +116,7 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Chan
 		_items.InsertRange(index, itemsList);
 		Change<T> change = new()
 		{
-			NewItems = itemsList,
-			NewItemsStartIndex = index
+			NewItems = new PositionalReadOnlyList<T>(itemsList, index)
 		};
 		NotifyObservers(change);
 	}
@@ -131,8 +127,7 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Chan
 		_items.RemoveAt(index);
 		Change<T> change = new()
 		{
-			OldItems = [item],
-			OldItemsStartIndex = index
+			OldItems = new PositionalReadOnlyList<T>([item], index)
 		};
 		NotifyObservers(change);
 	}
@@ -145,8 +140,7 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Chan
 		_items.RemoveRange(index, count);
 		Change<T> change = new()
 		{
-			OldItems = items,
-			OldItemsStartIndex = index
+			OldItems = new PositionalReadOnlyList<T>(items, index)
 		};
 		NotifyObservers(change);
 	}
@@ -159,10 +153,8 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Chan
 		IReadOnlyList<T> itemAsCollection = [item];
 		Change<T> change = new()
 		{
-			OldItems = itemAsCollection,
-			OldItemsStartIndex = oldIndex,
-			NewItems = itemAsCollection,
-			NewItemsStartIndex = newIndex
+			OldItems = new PositionalReadOnlyList<T>(itemAsCollection, oldIndex),
+			NewItems = new PositionalReadOnlyList<T>(itemAsCollection, newIndex)
 		};
 		NotifyObservers(change);
 	}
@@ -172,10 +164,8 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Chan
 		var movedItems = _items.MoveRange(oldIndex, count, newIndex);
 		Change<T> change = new()
 		{
-			OldItems = movedItems,
-			OldItemsStartIndex = oldIndex,
-			NewItems = movedItems,
-			NewItemsStartIndex = newIndex
+			OldItems = new PositionalReadOnlyList<T>(movedItems, oldIndex),
+			NewItems = new PositionalReadOnlyList<T>(movedItems, newIndex)
 		};
 		NotifyObservers(change);
 	}
@@ -188,8 +178,7 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Chan
 		Change<T> change = new()
 		{
 			Reset = true,
-			NewItems = itemsList,
-			NewItemsStartIndex = 0
+			NewItems = new PositionalReadOnlyList<T>(itemsList, 0)
 		};
 		NotifyObservers(change);
 	}
@@ -203,8 +192,7 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Chan
 			return;
 		Change<T> initialChange = new()
 		{
-			NewItems = _items.ToList(),
-			NewItemsStartIndex = 0
+			NewItems = new PositionalReadOnlyList<T>(_items.ToList(), 0)
 		};
 		observer.OnNext(initialChange);
 	}

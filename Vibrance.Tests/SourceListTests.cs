@@ -136,7 +136,7 @@ public sealed class SourceListTests
 		list.RemoveRange(2, 2);
 		IEnumerable<int> removedItems = [3, 4];
 		observer.LastObservedValue.OldItems.Should().Contain(removedItems);
-		observer.LastObservedValue.OldItemsStartIndex.Should().Be(2);
+		observer.LastObservedValue.OldItems.StartIndex.Should().Be(2);
 	}
 
 	[Fact]
@@ -147,7 +147,7 @@ public sealed class SourceListTests
 		IReadOnlyCollection<int> newItems = [4, 5];
 		list.InsertRange(2, newItems);
 		observer.LastObservedValue.NewItems.Should().Contain(newItems);
-		observer.LastObservedValue.NewItemsStartIndex.Should().Be(2);
+		observer.LastObservedValue.NewItems.StartIndex.Should().Be(2);
 	}
 
 	[Fact]

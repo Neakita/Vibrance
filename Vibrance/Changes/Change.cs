@@ -1,12 +1,8 @@
-using System.Collections.ObjectModel;
-
 namespace Vibrance.Changes;
 
 public sealed class Change<T>
 {
-	public IReadOnlyList<T> OldItems { get; init; } = ReadOnlyCollection<T>.Empty;
-	public int OldItemsStartIndex { get; init; } = -1;
-	public IReadOnlyList<T> NewItems { get; init; } = ReadOnlyCollection<T>.Empty;
-	public int NewItemsStartIndex { get; init; } = -1;
+	public PositionalReadOnlyList<T> OldItems { get; init; } = PositionalReadOnlyList<T>.Default;
+	public PositionalReadOnlyList<T> NewItems { get; init; } = PositionalReadOnlyList<T>.Default;
 	public bool Reset { get; init; }
 }
