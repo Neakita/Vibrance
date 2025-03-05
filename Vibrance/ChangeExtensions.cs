@@ -42,4 +42,10 @@ internal static class ChangeExtensions
 				change.NewItemsStartIndex),
 		_ => throw new ArgumentOutOfRangeException(nameof(change), change, null)
 	};
+
+	internal static bool IsMove<T>(this Change<T> change) =>
+		change.NewItems.Count > 0 &&
+		change.OldItems.Count > 0 &&
+		change.OldItemsStartIndex != change.NewItemsStartIndex &&
+		ReferenceEquals(change.NewItems, change.OldItems) || change.NewItems.SequenceEqual(change.OldItems);
 }

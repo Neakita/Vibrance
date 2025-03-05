@@ -16,8 +16,13 @@ internal sealed class SortSubscription<T> : IObserver<Change<T>>, InnerListProvi
 
 	public void OnNext(Change<T> value)
 	{
-		HandleOldItems(value);
-		HandleNewItems(value);
+		if (value.IsMove())
+			HandleMove(value);
+		else
+		{
+			HandleOldItems(value);
+			HandleNewItems(value);
+		}
 	}
 
 	public void OnCompleted()
@@ -40,6 +45,13 @@ internal sealed class SortSubscription<T> : IObserver<Change<T>>, InnerListProvi
 	private readonly List<T> _sorted = new();
 	private readonly List<int> _sourceToSortedIndexLookup = new();
 	private readonly IDisposable _subscription;
+
+	private void HandleMove(Change<T> value)
+	{
+		var oldIndex = value.OldItemsStartIndex;
+		var newIndex = value.NewItemsStartIndex;
+		_sourceToSortedIndexLookup.MoveRange(oldIndex, value.NewItems.Count, newIndex);
+	}
 
 	private void HandleOldItems(Change<T> value)
 	{
@@ -67,7 +79,7 @@ internal sealed class SortSubscription<T> : IObserver<Change<T>>, InnerListProvi
 
 	private void RemoveOrderedItems(Change<T> value)
 	{
-		for (var i = 0; i < value.OldItems.Count; i++)
+		for (var i = value.OldItems.Count - 1; i >= 0; i--)
 		{
 			var sourceIndex = value.OldItemsStartIndex + i;
 			var sortedIndex = _sourceToSortedIndexLookup[sourceIndex];
