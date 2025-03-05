@@ -11,6 +11,7 @@ internal sealed class FilterSubscription<T> : IObserver<Change<T>>, IDisposable
 
 	public void OnNext(Change<T> value)
 	{
+		HandleOldItems(value);
 		HandleNewItems(value);
 	}
 
@@ -36,18 +37,58 @@ internal sealed class FilterSubscription<T> : IObserver<Change<T>>, IDisposable
 	private readonly IDisposable _subscription;
 	private readonly List<int> _sourceToFilteredIndexLookup = new();
 
+	private void HandleOldItems(Change<T> change)
+	{
+		if (change.OldItems.Count == 0)
+			return;
+		var filteredItems = CreateOldFilteredItemsList(change);
+		var filteredStartIndex = GetFilteredIndex(change.OldItemsStartIndex);
+		RemoveLookupIndexes(change, filteredItems);
+		NotifyOldItems(filteredItems, filteredStartIndex);
+	}
+
+	private List<T> CreateOldFilteredItemsList(Change<T> change)
+	{
+		List<T> filteredItems = new();
+		for (var i = 0; i < change.OldItems.Count; i++)
+		{
+			var sourceIndex = change.OldItemsStartIndex + i;
+			var sortedIndex = _sourceToFilteredIndexLookup[sourceIndex];
+			if (sortedIndex >= 0)
+				filteredItems.Add(change.OldItems[i]);
+		}
+
+		return filteredItems;
+	}
+
+	private void RemoveLookupIndexes(Change<T> change, List<T> filteredItems)
+	{
+		_sourceToFilteredIndexLookup.RemoveRange(change.OldItemsStartIndex, change.OldItems.Count);
+		ShiftLookupIndexes(change.OldItemsStartIndex, -filteredItems.Count);
+	}
+
+	private void NotifyOldItems(List<T> filteredItems, int filteredStartIndex)
+	{
+		Change<T> filteredChange = new()
+		{
+			OldItems = filteredItems,
+			OldItemsStartIndex = filteredStartIndex
+		};
+		_observer.OnNext(filteredChange);
+	}
+
 	private void HandleNewItems(Change<T> change)
 	{
 		if (change.NewItems.Count == 0)
 			return;
-		int filteredStartIndex = GetIndexForInsertion(change.NewItemsStartIndex);
+		int filteredStartIndex = GetFilteredIndex(change.NewItemsStartIndex);
 		var lookupIndexes = BuildLookup(change, filteredStartIndex, out var passedItemsCount);
-		var filteredItems = CreateFilteredItemsList(change, passedItemsCount, lookupIndexes);
+		var filteredItems = CreateNewFilteredItemsList(change, passedItemsCount, lookupIndexes);
 		InsertLookupIndexes(change.NewItemsStartIndex, filteredItems.Count, lookupIndexes);
 		NotifyNewItems(filteredItems, filteredStartIndex);
 	}
 
-	private int GetIndexForInsertion(int sourceIndex)
+	private int GetFilteredIndex(int sourceIndex)
 	{
 		if (_sourceToFilteredIndexLookup.Count == 0)
 			return 0;
@@ -77,7 +118,7 @@ internal sealed class FilterSubscription<T> : IObserver<Change<T>>, IDisposable
 		return lookup;
 	}
 
-	private IReadOnlyList<T> CreateFilteredItemsList(Change<T> change, int passedItemsCount, List<int> lookupIndexes)
+	private static IReadOnlyList<T> CreateNewFilteredItemsList(Change<T> change, int passedItemsCount, List<int> lookupIndexes)
 	{
 		if (change.NewItems.Count == passedItemsCount)
 			return change.NewItems;
@@ -95,17 +136,16 @@ internal sealed class FilterSubscription<T> : IObserver<Change<T>>, IDisposable
 
 	private void InsertLookupIndexes(int sourceStartIndex, int filteredItemsCount, List<int> lookupIndexes)
 	{
-		ShiftLookupIndexesForInsertion(sourceStartIndex, filteredItemsCount);
+		ShiftLookupIndexes(sourceStartIndex, filteredItemsCount);
 		_sourceToFilteredIndexLookup.InsertRange(sourceStartIndex, lookupIndexes);
 	}
 
-	private void ShiftLookupIndexesForInsertion(int sourceStartIndex, int filteredItemsCount)
+	private void ShiftLookupIndexes(int sourceStartIndex, int delta)
 	{
 		for (var i = sourceStartIndex; i < _sourceToFilteredIndexLookup.Count; i++)
 		{
 			var index = _sourceToFilteredIndexLookup[i];
-			var delta = index > 0 ? filteredItemsCount : -filteredItemsCount;
-			_sourceToFilteredIndexLookup[i] += delta;
+			_sourceToFilteredIndexLookup[i] += index > 0 ? delta : -delta;
 		}
 	}
 

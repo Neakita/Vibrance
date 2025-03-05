@@ -43,6 +43,32 @@ public sealed class FilterTests
 		bool Predicate(int value) => value % 2 == 0;
 	}
 
+	[Fact]
+	public void ShouldObserveRangeRemove()
+	{
+		SourceList<int> source = [1, 2, 3, 4, 5];
+		using var observer = source.Filter(Predicate).ObserveChanges();
+		source.RemoveRange(1, 2);
+		observer.LastObservedValue.OldItems.Should().Contain([2, 3]);
+		observer.LastObservedValue.OldItemsStartIndex.Should().Be(1);
+		CheckLookupIntegrity(observer.Subscription, source, Predicate);
+		return;
+		bool Predicate(int _) => true;
+	}
+
+	[Fact]
+	public void ShouldObserveFilteredRangeRemove()
+	{
+		SourceList<int> source = [1, 2, 3, 4, 5, 6];
+		using var observer = source.Filter(Predicate).ObserveChanges();
+		source.RemoveRange(1, 3);
+		observer.LastObservedValue.OldItems.Should().Contain([2, 4]);
+		observer.LastObservedValue.OldItemsStartIndex.Should().Be(0);
+		CheckLookupIntegrity(observer.Subscription, source, Predicate);
+		return;
+		bool Predicate(int value) => value % 2 == 0;
+	}
+
 	private static void CheckLookupIntegrity<T>(IDisposable subscription, IReadOnlyList<T> source, Func<T, bool> predicate)
 	{
 		var sortSubscription = (FilterSubscription<T>)subscription;
