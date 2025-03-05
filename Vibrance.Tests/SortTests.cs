@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using FluentAssertions;
 using Vibrance.Sort;
 using Vibrance.Tests.Utilities;
@@ -120,7 +119,7 @@ public sealed class SortTests
 	{
 		var sortSubscription = (SortSubscription<T>)subscription;
 		var sorted = ((InnerListProvider<T>)subscription).Inner;
-		var lookup = GetLookup(sortSubscription);
+		var lookup = sortSubscription.SourceToSortedIndexLookup;
 		for (var i = 0; i < source.Count; i++)
 		{
 			var sortedIndex = lookup[i];
@@ -128,9 +127,5 @@ public sealed class SortTests
 			var expected = source[i];
 			actual.Should().Be(expected);
 		}
-		return;
-
-		[UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_sourceToSortedIndexLookup")]
-		static extern ref List<int> GetLookup(SortSubscription<T> subscription);
 	}
 }

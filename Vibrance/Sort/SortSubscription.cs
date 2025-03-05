@@ -40,6 +40,8 @@ internal sealed class SortSubscription<T> : IObserver<Change<T>>, InnerListProvi
 		_subscription.Dispose();
 	}
 
+	internal IReadOnlyList<int> SourceToSortedIndexLookup => _sourceToSortedIndexLookup;
+
 	private readonly IComparer<T> _comparer;
 	private readonly IObserver<Change<T>> _observer;
 	private readonly List<T> _sorted = new();
