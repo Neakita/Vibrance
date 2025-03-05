@@ -3,8 +3,10 @@ using Range = Vibrance.Utilities.Range;
 
 namespace Vibrance.Sort;
 
-internal sealed class SortSubscription<T> : IObserver<Change<T>>, IDisposable
+internal sealed class SortSubscription<T> : IObserver<Change<T>>, InnerListProvider<T>, IDisposable
 {
+	IReadOnlyList<T> InnerListProvider<T>.Inner => _sorted;
+
 	public SortSubscription(IObservable<Change<T>> source, IComparer<T> comparer, IObserver<Change<T>> observer)
 	{
 		_comparer = comparer;
