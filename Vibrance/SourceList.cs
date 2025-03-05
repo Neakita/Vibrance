@@ -168,17 +168,12 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Chan
 
 	public void MoveRange(int oldIndex, int count, int newIndex)
 	{
-		var items = _items.GetRange(oldIndex, count);
-		var modifiedNewIndex = newIndex;
-		_items.RemoveRange(oldIndex, count);
-		if (newIndex > oldIndex)
-			modifiedNewIndex -= count;
-		_items.InsertRange(modifiedNewIndex, items);
+		var movedItems = _items.MoveRange(oldIndex, count, newIndex);
 		Change<T> change = new()
 		{
-			OldItems = items,
+			OldItems = movedItems,
 			OldItemsStartIndex = oldIndex,
-			NewItems = items,
+			NewItems = movedItems,
 			NewItemsStartIndex = newIndex
 		};
 		NotifyObservers(change);

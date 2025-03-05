@@ -77,7 +77,7 @@ public sealed class SourceListTests
 	public void ShouldMoveItemsForward()
 	{
 		SourceList<int> list = [1, 2, 3];
-		list.MoveRange(0, 2, 3);
+		list.MoveRange(0, 2, 1);
 		list.Should().ContainInOrder(3, 1, 2);
 	}
 
