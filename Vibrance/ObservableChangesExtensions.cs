@@ -1,3 +1,4 @@
+using Vibrance.Filter;
 using Vibrance.Sort;
 using Vibrance.Transform;
 using Vibrance.Utilities;
@@ -38,5 +39,10 @@ public static class ObservableChangesExtensions
 	public static IObservable<Change<T>> Sort<T>(this IObservable<Change<T>> source, IComparer<T>? comparer = null)
 	{
 		return new ChangesSorter<T>(source, comparer ?? Comparer<T>.Default);
+	}
+
+	public static IObservable<Change<T>> Filter<T>(this IObservable<Change<T>> source, Func<T, bool> predicate)
+	{
+		return new ChangesFilter<T>(source, predicate);
 	}
 }
