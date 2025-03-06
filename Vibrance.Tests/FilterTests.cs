@@ -1,5 +1,4 @@
 using FluentAssertions;
-using Vibrance.Filter;
 using Vibrance.Tests.Utilities;
 
 namespace Vibrance.Tests;
@@ -71,7 +70,7 @@ public sealed class FilterTests
 
 	private static void CheckLookupIntegrity<T>(IDisposable subscription, IReadOnlyList<T> source, Func<T, bool> predicate)
 	{
-		var sortSubscription = (FilterSubscription<T>)subscription;
+		var sortSubscription = (ChangesFilter<T>)subscription;
 		var lookup = sortSubscription.SourceToFilteredIndexLookup;
 		var filteredIndex = 0;
 		List<int> expectedLookup = new(source.Count);

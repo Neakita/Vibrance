@@ -1,8 +1,8 @@
-namespace Vibrance.Filter;
+namespace Vibrance;
 
-internal sealed class FilterSubscription<T> : IObserver<Change<T>>, IDisposable
+internal sealed class ChangesFilter<T> : IObserver<Change<T>>, IDisposable
 {
-	public FilterSubscription(IObservable<Change<T>> source, Func<T, bool> predicate, IObserver<Change<T>> observer)
+	public ChangesFilter(IObservable<Change<T>> source, Func<T, bool> predicate, IObserver<Change<T>> observer)
 	{
 		_predicate = predicate;
 		_observer = observer;

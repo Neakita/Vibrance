@@ -1,5 +1,4 @@
 using FluentAssertions;
-using Vibrance.Sort;
 using Vibrance.Tests.Utilities;
 
 namespace Vibrance.Tests;
@@ -117,7 +116,7 @@ public sealed class SortTests
 
 	private static void CheckLookupIntegrity<T>(IDisposable subscription, IReadOnlyList<T> source)
 	{
-		var sortSubscription = (SortSubscription<T>)subscription;
+		var sortSubscription = (ChangesSorter<T>)subscription;
 		var sorted = ((InnerListProvider<T>)subscription).Inner;
 		var lookup = sortSubscription.SourceToSortedIndexLookup;
 		for (var i = 0; i < source.Count; i++)
