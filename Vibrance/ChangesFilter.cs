@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+
 namespace Vibrance;
 
 internal sealed class ChangesFilter<T> : IObserver<Change<T>>, IDisposable
@@ -11,8 +13,19 @@ internal sealed class ChangesFilter<T> : IObserver<Change<T>>, IDisposable
 
 	public void OnNext(Change<T> value)
 	{
-		HandleOldItems(value);
-		HandleNewItems(value);
+		var (oldStartIndex, oldItems) = HandleOldItems(value);
+		var (newStartIndex, newItems) = HandleNewItems(value);
+		if (oldItems.Count == 0 && newItems.Count == 0)
+			return;
+		Change<T> change = new()
+		{
+			OldItems = oldItems,
+			OldItemsStartIndex = oldStartIndex,
+			NewItems = newItems,
+			NewItemsStartIndex = newStartIndex,
+			Reset = value.Reset
+		};
+		_observer.OnNext(change);
 	}
 
 	public void OnCompleted()
@@ -37,14 +50,14 @@ internal sealed class ChangesFilter<T> : IObserver<Change<T>>, IDisposable
 	private readonly IDisposable _subscription;
 	private readonly List<int> _sourceToFilteredIndexLookup = new();
 
-	private void HandleOldItems(Change<T> change)
+	private (int startIndex, IReadOnlyList<T> items) HandleOldItems(Change<T> change)
 	{
 		if (change.OldItems.Count == 0)
-			return;
+			return (-1, ReadOnlyCollection<T>.Empty);
 		var filteredItems = CreateOldFilteredItemsList(change);
 		var filteredStartIndex = GetFilteredIndex(change.OldItemsStartIndex);
 		RemoveLookupIndexes(change, filteredItems);
-		NotifyOldItems(filteredItems, filteredStartIndex);
+		return (filteredStartIndex, filteredItems);
 	}
 
 	private List<T> CreateOldFilteredItemsList(Change<T> change)
@@ -67,25 +80,15 @@ internal sealed class ChangesFilter<T> : IObserver<Change<T>>, IDisposable
 		ShiftLookupIndexes(change.OldItemsStartIndex, -filteredItems.Count);
 	}
 
-	private void NotifyOldItems(List<T> filteredItems, int filteredStartIndex)
-	{
-		Change<T> filteredChange = new()
-		{
-			OldItems = filteredItems,
-			OldItemsStartIndex = filteredStartIndex
-		};
-		_observer.OnNext(filteredChange);
-	}
-
-	private void HandleNewItems(Change<T> change)
+	private (int startIndex, IReadOnlyList<T> items) HandleNewItems(Change<T> change)
 	{
 		if (change.NewItems.Count == 0)
-			return;
+			return (-1, ReadOnlyCollection<T>.Empty);
 		int filteredStartIndex = GetFilteredIndex(change.NewItemsStartIndex);
 		var lookupIndexes = BuildLookup(change, filteredStartIndex, out var passedItemsCount);
 		var filteredItems = CreateNewFilteredItemsList(change, passedItemsCount, lookupIndexes);
 		InsertLookupIndexes(change.NewItemsStartIndex, filteredItems.Count, lookupIndexes);
-		NotifyNewItems(filteredItems, filteredStartIndex);
+		return (filteredStartIndex, filteredItems);
 	}
 
 	private int GetFilteredIndex(int sourceIndex)
@@ -147,15 +150,5 @@ internal sealed class ChangesFilter<T> : IObserver<Change<T>>, IDisposable
 			var index = _sourceToFilteredIndexLookup[i];
 			_sourceToFilteredIndexLookup[i] += index > 0 ? delta : -delta;
 		}
-	}
-
-	private void NotifyNewItems(IReadOnlyList<T> filteredItems, int filteredStartIndex)
-	{
-		Change<T> change = new()
-		{
-			NewItems = filteredItems,
-			NewItemsStartIndex = filteredStartIndex
-		};
-		_observer.OnNext(change);
 	}
 }
