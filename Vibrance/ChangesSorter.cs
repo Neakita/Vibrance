@@ -2,15 +2,15 @@ using Vibrance.Changes;
 using Vibrance.Utilities;
 using Range = Vibrance.Utilities.Range;
 
-namespace Vibrance.Sort;
+namespace Vibrance;
 
-internal sealed class SortSubscription<T> : IObserver<Change<T>>, InnerListProvider<T>, IDisposable
+internal sealed class ChangesSorter<T> : IObserver<Change<T>>, InnerListProvider<T>, IDisposable
 {
 	IReadOnlyList<T> InnerListProvider<T>.Inner => _sorted;
 
-	public SortSubscription(IObservable<Change<T>> source, IComparer<T> comparer, IObserver<Change<T>> observer)
+	public ChangesSorter(IObservable<Change<T>> source, IComparer<T>? comparer, IObserver<Change<T>> observer)
 	{
-		_comparer = comparer;
+		_comparer = comparer ?? Comparer<T>.Default;
 		_observer = observer;
 		_subscription = source.Subscribe(this);
 	}
