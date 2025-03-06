@@ -1,8 +1,7 @@
-using Vibrance.Changes;
 using Vibrance.Utilities;
 using Range = Vibrance.Utilities.Range;
 
-namespace Vibrance;
+namespace Vibrance.Changes;
 
 internal sealed class ChangesSorter<T> : IObserver<Change<T>>, InnerListProvider<T>, IDisposable
 {

@@ -1,6 +1,4 @@
-using Vibrance.Changes;
-
-namespace Vibrance;
+namespace Vibrance.Changes;
 
 internal sealed class ChangesFilter<T> : IObserver<Change<T>>, IDisposable
 {

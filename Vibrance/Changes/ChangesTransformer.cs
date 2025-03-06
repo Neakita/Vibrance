@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
-using Vibrance.Changes;
 
-namespace Vibrance;
+namespace Vibrance.Changes;
 
 internal sealed class ChangesTransformer<TSource, TDestination> : IObserver<Change<TSource>>, InnerListProvider<TDestination>, IDisposable
 {
