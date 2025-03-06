@@ -1,49 +1,30 @@
-namespace Vibrance.Changes;
+namespace Vibrance.Changes.Middlewares;
 
-internal sealed class ChangesFilter<T> : IObserver<Change<T>>, IDisposable
+internal sealed class FilterMiddleware<T> : ChangesMiddleware<T, T>
 {
-	public ChangesFilter(IObservable<Change<T>> source, Func<T, bool> predicate, IObserver<Change<T>> observer)
+	public FilterMiddleware(Func<T, bool> predicate)
 	{
 		_predicate = predicate;
-		_observer = observer;
-		_subscription = source.Subscribe(this);
-	}
-
-	public void OnNext(Change<T> value)
-	{
-		var oldItems = HandleOldItems(value.OldItems);
-		var newItems = HandleNewItems(value.NewItems);
-		if (oldItems.Count == 0 && newItems.Count == 0)
-			return;
-		Change<T> change = new()
-		{
-			OldItems = oldItems,
-			NewItems = newItems,
-			Reset = value.Reset
-		};
-		_observer.OnNext(change);
-	}
-
-	public void OnCompleted()
-	{
-		_observer.OnCompleted();
-	}
-
-	public void OnError(Exception error)
-	{
-		_observer.OnError(error);
-	}
-
-	public void Dispose()
-	{
-		_subscription.Dispose();
 	}
 
 	internal IReadOnlyList<int> SourceToFilteredIndexLookup => _sourceToFilteredIndexLookup;
 
+	protected override void HandleChange(Change<T> change)
+	{
+		var oldItems = HandleOldItems(change.OldItems);
+		var newItems = HandleNewItems(change.NewItems);
+		if (oldItems.Count == 0 && newItems.Count == 0 && !change.Reset)
+			return;
+		Change<T> filteredChange = new()
+		{
+			OldItems = oldItems,
+			NewItems = newItems,
+			Reset = change.Reset
+		};
+		DestinationObserver.OnNext(filteredChange);
+	}
+
 	private readonly Func<T, bool> _predicate;
-	private readonly IObserver<Change<T>> _observer;
-	private readonly IDisposable _subscription;
 	private readonly List<int> _sourceToFilteredIndexLookup = new();
 
 	private PositionalReadOnlyList<T> HandleOldItems(PositionalReadOnlyList<T> items)

@@ -1,52 +1,33 @@
 using Vibrance.Utilities;
 using Range = Vibrance.Utilities.Range;
 
-namespace Vibrance.Changes;
+namespace Vibrance.Changes.Middlewares;
 
-internal sealed class ChangesSorter<T> : IObserver<Change<T>>, InnerListProvider<T>, IDisposable
+internal sealed class SorterMiddleware<T> : ChangesMiddleware<T, T>, InnerListProvider<T>
 {
 	IReadOnlyList<T> InnerListProvider<T>.Inner => _sorted;
 
-	public ChangesSorter(IObservable<Change<T>> source, IComparer<T>? comparer, IObserver<Change<T>> observer)
+	public SorterMiddleware(IComparer<T>? comparer)
 	{
 		_comparer = comparer ?? Comparer<T>.Default;
-		_observer = observer;
-		_subscription = source.Subscribe(this);
-	}
-
-	public void OnNext(Change<T> value)
-	{
-		if (value.IsMove())
-			HandleMove(value);
-		else
-		{
-			HandleOldItems(value.OldItems);
-			HandleNewItems(value.NewItems);
-		}
-	}
-
-	public void OnCompleted()
-	{
-		_observer.OnCompleted();
-	}
-
-	public void OnError(Exception error)
-	{
-		_observer.OnError(error);
-	}
-
-	public void Dispose()
-	{
-		_subscription.Dispose();
 	}
 
 	internal IReadOnlyList<int> SourceToSortedIndexLookup => _sourceToSortedIndexLookup;
 
+	protected override void HandleChange(Change<T> change)
+	{
+		if (change.IsMove())
+			HandleMove(change);
+		else
+		{
+			HandleOldItems(change.OldItems);
+			HandleNewItems(change.NewItems);
+		}
+	}
+
 	private readonly IComparer<T> _comparer;
-	private readonly IObserver<Change<T>> _observer;
 	private readonly List<T> _sorted = new();
 	private readonly List<int> _sourceToSortedIndexLookup = new();
-	private readonly IDisposable _subscription;
 
 	private void HandleMove(Change<T> value)
 	{
@@ -61,7 +42,7 @@ internal sealed class ChangesSorter<T> : IObserver<Change<T>>, InnerListProvider
 			return;
 		var changes = PrepareDeletionChanges(items);
 		RemoveOrderedItems(items);
-		NotifyDeletions(changes);
+		NotifyObserver(changes);
 	}
 
 	private List<Change<T>> PrepareDeletionChanges(PositionalReadOnlyList<T> items)
@@ -104,10 +85,10 @@ internal sealed class ChangesSorter<T> : IObserver<Change<T>>, InnerListProvider
 				_sourceToSortedIndexLookup[i]--;
 	}
 
-	private void NotifyDeletions(List<Change<T>> changes)
+	private void NotifyObserver(List<Change<T>> changes)
 	{
 		foreach (var change in changes)
-			_observer.OnNext(change);
+			DestinationObserver.OnNext(change);
 	}
 
 	private void HandleNewItems(PositionalReadOnlyList<T> items)
@@ -170,7 +151,7 @@ internal sealed class ChangesSorter<T> : IObserver<Change<T>>, InnerListProvider
 			{
 				NewItems = new PositionalReadOnlyList<T>(sortedRange, range.Start)
 			};
-			_observer.OnNext(change);
+			DestinationObserver.OnNext(change);
 		}
 	}
 }

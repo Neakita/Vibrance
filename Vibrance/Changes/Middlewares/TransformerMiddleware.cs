@@ -1,51 +1,24 @@
 using System.Collections.ObjectModel;
 
-namespace Vibrance.Changes;
+namespace Vibrance.Changes.Middlewares;
 
-internal sealed class ChangesTransformer<TSource, TDestination> : IObserver<Change<TSource>>, InnerListProvider<TDestination>, IDisposable
+internal sealed class TransformerMiddleware<TSource, TDestination> : ChangesMiddleware<TSource, TDestination>, InnerListProvider<TDestination>
 {
 	IReadOnlyList<TDestination> InnerListProvider<TDestination>.Inner => _transformedItems;
 
-	public ChangesTransformer(
-		IObservable<Change<TSource>> source,
-		Func<TSource, TDestination> selector,
-		IObserver<Change<TDestination>> observer)
+	public TransformerMiddleware(Func<TSource, TDestination> selector)
 	{
 		_selector = selector;
-		_observer = observer;
-		_subscriptionDisposable = source.Subscribe(this);
 	}
 
-	public void OnNext(Change<TSource> change)
-	{
-		HandleChange(change);
-	}
-
-	public void OnCompleted()
-	{
-		_observer.OnCompleted();
-	}
-
-	public void OnError(Exception error)
-	{
-		_observer.OnError(error);
-	}
-
-	public void Dispose()
-	{
-		_subscriptionDisposable.Dispose();
-	}
-
-	private readonly IDisposable _subscriptionDisposable;
 	private readonly Func<TSource, TDestination> _selector;
-	private readonly IObserver<Change<TDestination>> _observer;
 	private readonly List<TDestination> _transformedItems = new();
 
-	private void HandleChange(Change<TSource> change)
+	protected override void HandleChange(Change<TSource> change)
 	{
 		var transformedChange = Transform(change);
 		transformedChange.ApplyToList(_transformedItems);
-		_observer.OnNext(transformedChange);
+		DestinationObserver.OnNext(transformedChange);
 	}
 
 	private Change<TDestination> Transform(Change<TSource> change)
