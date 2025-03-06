@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Vibrance.Changes;
 using Vibrance.Tests.Utilities;
 
 namespace Vibrance.Tests;
@@ -11,7 +12,7 @@ public sealed class FilterTests
 		SourceList<int> source = [1, 2, 3];
 		using var observer = source.Filter(Predicate).ObserveChanges();
 		observer.LastObservedValue.NewItems.Should().Contain([1, 2, 3]);
-		observer.LastObservedValue.NewItemsStartIndex.Should().Be(0);
+		observer.LastObservedValue.NewItems.StartIndex.Should().Be(0);
 		CheckLookupIntegrity(observer.Subscription, source, Predicate);
 		return;
 		bool Predicate(int _) => true;
@@ -23,7 +24,7 @@ public sealed class FilterTests
 		SourceList<int> source = [1, 2, 3, 4];
 		using var observer = source.Filter(Predicate).ObserveChanges();
 		observer.LastObservedValue.NewItems.Should().Contain([2, 4]);
-		observer.LastObservedValue.NewItemsStartIndex.Should().Be(0);
+		observer.LastObservedValue.NewItems.StartIndex.Should().Be(0);
 		CheckLookupIntegrity(observer.Subscription, source, Predicate);
 		return;
 		bool Predicate(int value) => value % 2 == 0;
@@ -36,7 +37,7 @@ public sealed class FilterTests
 		using var observer = source.Filter(Predicate).ObserveChanges();
 		source.InsertRange(2, [5, 6, 7, 8]);
 		observer.LastObservedValue.NewItems.Should().Contain([6, 8]);
-		observer.LastObservedValue.NewItemsStartIndex.Should().Be(1);
+		observer.LastObservedValue.NewItems.StartIndex.Should().Be(1);
 		CheckLookupIntegrity(observer.Subscription, source, Predicate);
 		return;
 		bool Predicate(int value) => value % 2 == 0;
@@ -49,7 +50,7 @@ public sealed class FilterTests
 		using var observer = source.Filter(Predicate).ObserveChanges();
 		source.RemoveRange(1, 2);
 		observer.LastObservedValue.OldItems.Should().Contain([2, 3]);
-		observer.LastObservedValue.OldItemsStartIndex.Should().Be(1);
+		observer.LastObservedValue.OldItems.StartIndex.Should().Be(1);
 		CheckLookupIntegrity(observer.Subscription, source, Predicate);
 		return;
 		bool Predicate(int _) => true;
@@ -62,7 +63,7 @@ public sealed class FilterTests
 		using var observer = source.Filter(Predicate).ObserveChanges();
 		source.RemoveRange(1, 3);
 		observer.LastObservedValue.OldItems.Should().Contain([2, 4]);
-		observer.LastObservedValue.OldItemsStartIndex.Should().Be(0);
+		observer.LastObservedValue.OldItems.StartIndex.Should().Be(0);
 		CheckLookupIntegrity(observer.Subscription, source, Predicate);
 		return;
 		bool Predicate(int value) => value % 2 == 0;

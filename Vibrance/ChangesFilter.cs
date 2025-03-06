@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+using Vibrance.Changes;
 
 namespace Vibrance;
 
@@ -13,16 +13,14 @@ internal sealed class ChangesFilter<T> : IObserver<Change<T>>, IDisposable
 
 	public void OnNext(Change<T> value)
 	{
-		var (oldStartIndex, oldItems) = HandleOldItems(value);
-		var (newStartIndex, newItems) = HandleNewItems(value);
+		var oldItems = HandleOldItems(value.OldItems);
+		var newItems = HandleNewItems(value.NewItems);
 		if (oldItems.Count == 0 && newItems.Count == 0)
 			return;
 		Change<T> change = new()
 		{
 			OldItems = oldItems,
-			OldItemsStartIndex = oldStartIndex,
 			NewItems = newItems,
-			NewItemsStartIndex = newStartIndex,
 			Reset = value.Reset
 		};
 		_observer.OnNext(change);
@@ -50,45 +48,45 @@ internal sealed class ChangesFilter<T> : IObserver<Change<T>>, IDisposable
 	private readonly IDisposable _subscription;
 	private readonly List<int> _sourceToFilteredIndexLookup = new();
 
-	private (int startIndex, IReadOnlyList<T> items) HandleOldItems(Change<T> change)
+	private PositionalReadOnlyList<T> HandleOldItems(PositionalReadOnlyList<T> items)
 	{
-		if (change.OldItems.Count == 0)
-			return (-1, ReadOnlyCollection<T>.Empty);
-		var filteredItems = CreateOldFilteredItemsList(change);
-		var filteredStartIndex = GetFilteredIndex(change.OldItemsStartIndex);
-		RemoveLookupIndexes(change, filteredItems);
-		return (filteredStartIndex, filteredItems);
+		if (items.Count == 0)
+			return PositionalReadOnlyList<T>.Default;
+		var filteredItems = CreateOldFilteredItemsList(items);
+		var filteredStartIndex = GetFilteredIndex(items.StartIndex);
+		RemoveLookupIndexes(items, filteredItems);
+		return new PositionalReadOnlyList<T>(filteredItems, filteredStartIndex);
 	}
 
-	private List<T> CreateOldFilteredItemsList(Change<T> change)
+	private List<T> CreateOldFilteredItemsList(PositionalReadOnlyList<T> items)
 	{
 		List<T> filteredItems = new();
-		for (var i = 0; i < change.OldItems.Count; i++)
+		for (var i = 0; i < items.Count; i++)
 		{
-			var sourceIndex = change.OldItemsStartIndex + i;
+			var sourceIndex = items.StartIndex + i;
 			var sortedIndex = _sourceToFilteredIndexLookup[sourceIndex];
 			if (sortedIndex >= 0)
-				filteredItems.Add(change.OldItems[i]);
+				filteredItems.Add(items[i]);
 		}
 
 		return filteredItems;
 	}
 
-	private void RemoveLookupIndexes(Change<T> change, List<T> filteredItems)
+	private void RemoveLookupIndexes(PositionalReadOnlyList<T> sourceItems, List<T> filteredItems)
 	{
-		_sourceToFilteredIndexLookup.RemoveRange(change.OldItemsStartIndex, change.OldItems.Count);
-		ShiftLookupIndexes(change.OldItemsStartIndex, -filteredItems.Count);
+		_sourceToFilteredIndexLookup.RemoveRange(sourceItems.StartIndex, sourceItems.Count);
+		ShiftLookupIndexes(sourceItems.StartIndex, -filteredItems.Count);
 	}
 
-	private (int startIndex, IReadOnlyList<T> items) HandleNewItems(Change<T> change)
+	private PositionalReadOnlyList<T> HandleNewItems(PositionalReadOnlyList<T> items)
 	{
-		if (change.NewItems.Count == 0)
-			return (-1, ReadOnlyCollection<T>.Empty);
-		int filteredStartIndex = GetFilteredIndex(change.NewItemsStartIndex);
-		var lookupIndexes = BuildLookup(change, filteredStartIndex, out var passedItemsCount);
-		var filteredItems = CreateNewFilteredItemsList(change, passedItemsCount, lookupIndexes);
-		InsertLookupIndexes(change.NewItemsStartIndex, filteredItems.Count, lookupIndexes);
-		return (filteredStartIndex, filteredItems);
+		if (items.Count == 0)
+			return PositionalReadOnlyList<T>.Default;
+		int filteredStartIndex = GetFilteredIndex(items.StartIndex);
+		var lookupIndexes = BuildLookup(items, filteredStartIndex, out var passedItemsCount);
+		var filteredItems = CreateNewFilteredItemsList(items, passedItemsCount, lookupIndexes);
+		InsertLookupIndexes(items.StartIndex, filteredItems.Count, lookupIndexes);
+		return new PositionalReadOnlyList<T>(filteredItems, filteredStartIndex);
 	}
 
 	private int GetFilteredIndex(int sourceIndex)
@@ -101,12 +99,12 @@ internal sealed class ChangesFilter<T> : IObserver<Change<T>>, IDisposable
 		return filteredIndex;
 	}
 
-	private List<int> BuildLookup(Change<T> change, int filteredStartIndex, out int passedItemsCount)
+	private List<int> BuildLookup(PositionalReadOnlyList<T> items, int filteredStartIndex, out int passedItemsCount)
 	{
 		passedItemsCount = 0;
-		List<int> lookup = new(change.NewItems.Count);
+		List<int> lookup = new(items.Count);
 		var filteredIndex = filteredStartIndex;
-		foreach (var item in change.NewItems)
+		foreach (var item in items)
 		{
 			if (_predicate(item))
 			{
@@ -121,20 +119,20 @@ internal sealed class ChangesFilter<T> : IObserver<Change<T>>, IDisposable
 		return lookup;
 	}
 
-	private static IReadOnlyList<T> CreateNewFilteredItemsList(Change<T> change, int passedItemsCount, List<int> lookupIndexes)
+	private static IReadOnlyList<T> CreateNewFilteredItemsList(PositionalReadOnlyList<T> sourceItems, int passedItemsCount, List<int> lookupIndexes)
 	{
-		if (change.NewItems.Count == passedItemsCount)
-			return change.NewItems;
-		List<T> items = new(passedItemsCount);
-		for (int sourceIndex = 0; sourceIndex < change.NewItems.Count; sourceIndex++)
+		if (sourceItems.Count == passedItemsCount)
+			return sourceItems;
+		List<T> filteredItems = new(passedItemsCount);
+		for (int sourceIndex = 0; sourceIndex < sourceItems.Count; sourceIndex++)
 		{
 			var sortedIndex = lookupIndexes[sourceIndex];
 			if (sortedIndex < 0)
 				continue;
-			var item = change.NewItems[sourceIndex];
-			items.Add(item);
+			var item = sourceItems[sourceIndex];
+			filteredItems.Add(item);
 		}
-		return items;
+		return filteredItems;
 	}
 
 	private void InsertLookupIndexes(int sourceStartIndex, int filteredItemsCount, List<int> lookupIndexes)

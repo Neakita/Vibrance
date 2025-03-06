@@ -1,5 +1,6 @@
 using BenchmarkDotNet.Attributes;
 using DynamicData;
+using Vibrance.Changes;
 
 namespace Vibrance.Benchmarks;
 
