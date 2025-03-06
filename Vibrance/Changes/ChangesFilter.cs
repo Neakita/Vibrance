@@ -50,57 +50,36 @@ internal sealed class ChangesFilter<T> : IObserver<Change<T>>, IDisposable
 	{
 		if (items.Count == 0)
 			return PositionalReadOnlyList<T>.Default;
-		var filteredItems = CreateOldFilteredItemsList(items);
-		var filteredStartIndex = GetFilteredIndex(items.StartIndex);
-		RemoveLookupIndexes(items, filteredItems);
-		return new PositionalReadOnlyList<T>(filteredItems, filteredStartIndex);
-	}
-
-	private List<T> CreateOldFilteredItemsList(PositionalReadOnlyList<T> items)
-	{
-		List<T> filteredItems = new();
-		for (var i = 0; i < items.Count; i++)
-		{
-			var sourceIndex = items.StartIndex + i;
-			var sortedIndex = _sourceToFilteredIndexLookup[sourceIndex];
-			if (sortedIndex >= 0)
-				filteredItems.Add(items[i]);
-		}
-
+		var filteredItems = CreateFilteredItemsList(items);
+		RemoveLookupIndexes(items, filteredItems.Count);
 		return filteredItems;
 	}
 
-	private void RemoveLookupIndexes(PositionalReadOnlyList<T> sourceItems, List<T> filteredItems)
+	private void RemoveLookupIndexes(PositionalReadOnlyList<T> sourceItems, int filteredItemsCount)
 	{
 		_sourceToFilteredIndexLookup.RemoveRange(sourceItems.StartIndex, sourceItems.Count);
-		ShiftLookupIndexes(sourceItems.StartIndex, -filteredItems.Count);
+		ShiftLookupIndexes(sourceItems.StartIndex, -filteredItemsCount);
 	}
 
 	private PositionalReadOnlyList<T> HandleNewItems(PositionalReadOnlyList<T> items)
 	{
 		if (items.Count == 0)
 			return PositionalReadOnlyList<T>.Default;
-		int filteredStartIndex = GetFilteredIndex(items.StartIndex);
-		var lookupIndexes = BuildLookup(items, filteredStartIndex, out var passedItemsCount);
-		var filteredItems = CreateNewFilteredItemsList(items, passedItemsCount, lookupIndexes);
-		InsertLookupIndexes(items.StartIndex, filteredItems.Count, lookupIndexes);
-		return new PositionalReadOnlyList<T>(filteredItems, filteredStartIndex);
+		AppendLookup(items);
+		return CreateFilteredItemsList(items);
 	}
 
-	private int GetFilteredIndex(int sourceIndex)
+	private void AppendLookup(PositionalReadOnlyList<T> items)
 	{
-		if (_sourceToFilteredIndexLookup.Count == 0)
-			return 0;
-		int filteredIndex = _sourceToFilteredIndexLookup[sourceIndex];
-		if (filteredIndex < 0)
-			filteredIndex = ~filteredIndex;
-		return filteredIndex;
+		var lookupIndexes = BuildLookup(items, out var filteredItemsCount);
+		InsertLookupIndexes(items.StartIndex, filteredItemsCount, lookupIndexes);
 	}
 
-	private List<int> BuildLookup(PositionalReadOnlyList<T> items, int filteredStartIndex, out int passedItemsCount)
+	private List<int> BuildLookup(PositionalReadOnlyList<T> items, out int passedItemsCount)
 	{
 		passedItemsCount = 0;
 		List<int> lookup = new(items.Count);
+		int filteredStartIndex = GetFilteredIndex(items.StartIndex);
 		var filteredIndex = filteredStartIndex;
 		foreach (var item in items)
 		{
@@ -117,22 +96,6 @@ internal sealed class ChangesFilter<T> : IObserver<Change<T>>, IDisposable
 		return lookup;
 	}
 
-	private static IReadOnlyList<T> CreateNewFilteredItemsList(PositionalReadOnlyList<T> sourceItems, int passedItemsCount, List<int> lookupIndexes)
-	{
-		if (sourceItems.Count == passedItemsCount)
-			return sourceItems;
-		List<T> filteredItems = new(passedItemsCount);
-		for (int sourceIndex = 0; sourceIndex < sourceItems.Count; sourceIndex++)
-		{
-			var sortedIndex = lookupIndexes[sourceIndex];
-			if (sortedIndex < 0)
-				continue;
-			var item = sourceItems[sourceIndex];
-			filteredItems.Add(item);
-		}
-		return filteredItems;
-	}
-
 	private void InsertLookupIndexes(int sourceStartIndex, int filteredItemsCount, List<int> lookupIndexes)
 	{
 		ShiftLookupIndexes(sourceStartIndex, filteredItemsCount);
@@ -146,5 +109,34 @@ internal sealed class ChangesFilter<T> : IObserver<Change<T>>, IDisposable
 			var index = _sourceToFilteredIndexLookup[i];
 			_sourceToFilteredIndexLookup[i] += index > 0 ? delta : -delta;
 		}
+	}
+
+	private PositionalReadOnlyList<T> CreateFilteredItemsList(PositionalReadOnlyList<T> sourceItems)
+	{
+		List<T> filteredItems = new();
+		for (var i = 0; i < sourceItems.Count; i++)
+		{
+			var sourceIndex = sourceItems.StartIndex + i;
+			if (IsPassedFilterAt(sourceIndex))
+				filteredItems.Add(sourceItems[i]);
+		}
+		var filteredStartIndex = GetFilteredIndex(sourceItems.StartIndex);
+		return new PositionalReadOnlyList<T>(filteredItems, filteredStartIndex);
+	}
+
+	private bool IsPassedFilterAt(int sourceIndex)
+	{
+		var sortedIndex = _sourceToFilteredIndexLookup[sourceIndex];
+		return sortedIndex >= 0;
+	}
+
+	private int GetFilteredIndex(int sourceIndex)
+	{
+		if (_sourceToFilteredIndexLookup.Count == 0)
+			return 0;
+		int filteredIndex = _sourceToFilteredIndexLookup[sourceIndex];
+		if (filteredIndex < 0)
+			filteredIndex = ~filteredIndex;
+		return filteredIndex;
 	}
 }
