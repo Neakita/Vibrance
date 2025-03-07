@@ -60,7 +60,7 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Chan
 		Insert(index, item);
 	}
 
-	public void AddRange(IEnumerable<T> items)
+	public void AddRange(params IEnumerable<T> items)
 	{
 		var index = _items.Count;
 		InsertRange(index, items);
@@ -110,7 +110,7 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Chan
 		NotifyObservers(change);
 	}
 
-	public void InsertRange(int index, IEnumerable<T> items)
+	public void InsertRange(int index, params IEnumerable<T> items)
 	{
 		var itemsList = items.ToList();
 		_items.InsertRange(index, itemsList);
@@ -170,7 +170,7 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Chan
 		NotifyObservers(change);
 	}
 
-	public void ReplaceAll(IEnumerable<T> items)
+	public void ReplaceAll(params IEnumerable<T> items)
 	{
 		_items.Clear();
 		var itemsList = items.ToList();
