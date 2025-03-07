@@ -7,33 +7,28 @@ namespace Vibrance.Tests;
 public sealed class TransformTests
 {
 	[Fact]
-	public void ShouldTransformInitialItems()
+	public void ShouldObserveInitialItems()
 	{
 		SourceList<int> list = [1, 2, 3];
-		var transformedChanges = list.Transform(number => number.ToString());
-		using var observer = transformedChanges.ObserveChanges();
-		IEnumerable<string> expectedItems = ["1", "2", "3"];
-		observer.LastObservedValue.NewItems.Should().BeEquivalentTo(expectedItems);
+		using var observer = list.Transform(number => number.ToString()).ObserveChanges();
+		observer.LastObservedValue.NewItems.Should().ContainInOrder("1", "2", "3");
 	}
 
 	[Fact]
-	public void ShouldTranslateReset()
+	public void ShouldObserveReset()
 	{
 		SourceList<int> list = [1, 2, 3];
-		var transformedChanges = list.Transform(number => number.ToString());
-		using var observer = transformedChanges.ObserveChanges();
+		using var observer = list.Transform(number => number.ToString()).ObserveChanges();
 		list.Clear();
 		observer.LastObservedValue.Reset.Should().BeTrue();
 	}
 
 	[Fact]
-	public void ShouldTranslateRemovedItems()
+	public void ShouldObserveRemovedItems()
 	{
 		SourceList<int> list = [1, 2, 3];
-		var transformedChanges = list.Transform(number => number.ToString());
-		using var observer = transformedChanges.ObserveChanges();
+		using var observer = list.Transform(number => number.ToString()).ObserveChanges();
 		list.RemoveRange(0, 2);
-		IEnumerable<string> expectedRemovedItems = ["1", "2"];
-		observer.LastObservedValue.OldItems.Should().BeEquivalentTo(expectedRemovedItems);
+		observer.LastObservedValue.OldItems.Should().ContainInOrder("1", "2");
 	}
 }
