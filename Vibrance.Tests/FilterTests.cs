@@ -96,6 +96,33 @@ public sealed class FilterTests
 		bool Predicate(int value) => value % 2 == 0;
 	}
 
+	[Fact]
+	public void ShouldNotObserveMoveWhenNotEffectivelyMoved()
+	{
+		SourceList<int> source = [1, 2, 3, 4];
+		using var observer = source.Filter(Predicate).ObserveChanges();
+		var initialChange = observer.LastObservedValue;
+		source.MoveRange(0, 2, 1);
+		observer.LastObservedValue.Should().Be(initialChange);
+		CheckLookupIntegrity(observer.Subscription, source, Predicate);
+		return;
+		bool Predicate(int value) => value % 2 == 0;
+	}
+
+	[Fact]
+	public void ShouldObserveMove()
+	{
+		SourceList<int> source = [1, 2, 3, 4];
+		using var observer = source.Filter(Predicate).ObserveChanges();
+		source.MoveRange(0, 2, 2);
+		observer.LastObservedValue.OldItems.StartIndex.Should().Be(0);
+		observer.LastObservedValue.NewItems.Should().Contain(2);
+		observer.LastObservedValue.NewItems.StartIndex.Should().Be(1);
+		CheckLookupIntegrity(observer.Subscription, source, Predicate);
+		return;
+		bool Predicate(int value) => value % 2 == 0;
+	}
+
 	private static void CheckLookupIntegrity<T>(IDisposable subscription, IReadOnlyList<T> source, Func<T, bool> predicate)
 	{
 		var sortSubscription = (FilterMiddleware<T>)subscription;

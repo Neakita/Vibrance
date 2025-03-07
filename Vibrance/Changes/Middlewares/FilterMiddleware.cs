@@ -15,6 +15,8 @@ internal sealed class FilterMiddleware<T> : ChangesMiddleware<T, T>
 		var newItems = HandleNewItems(change.NewItems);
 		if (oldItems.Count == 0 && newItems.Count == 0 && !change.Reset)
 			return;
+		if (oldItems.StartIndex == newItems.StartIndex)
+			return;
 		Change<T> filteredChange = new()
 		{
 			OldItems = oldItems,
@@ -60,7 +62,12 @@ internal sealed class FilterMiddleware<T> : ChangesMiddleware<T, T>
 	{
 		passedItemsCount = 0;
 		List<int> lookup = new(items.Count);
-		int filteredStartIndex = GetFilteredIndex(items.StartIndex);
+		int filteredStartIndex;
+		// weird edge case when adding items at the end
+		if (items.StartIndex == _sourceToFilteredIndexLookup.Count && items.StartIndex != 0)
+			filteredStartIndex = GetFilteredIndex(items.StartIndex - 1) + 1;
+		else
+			filteredStartIndex = GetFilteredIndex(items.StartIndex);
 		var filteredIndex = filteredStartIndex;
 		foreach (var item in items)
 		{
@@ -88,7 +95,7 @@ internal sealed class FilterMiddleware<T> : ChangesMiddleware<T, T>
 		for (var i = sourceStartIndex; i < _sourceToFilteredIndexLookup.Count; i++)
 		{
 			var index = _sourceToFilteredIndexLookup[i];
-			_sourceToFilteredIndexLookup[i] += index > 0 ? delta : -delta;
+			_sourceToFilteredIndexLookup[i] += index >= 0 ? delta : -delta;
 		}
 	}
 
