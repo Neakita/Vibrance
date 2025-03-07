@@ -100,6 +100,18 @@ public sealed class SortTests
 		CheckDataIntegrity(observer, list);
 	}
 
+	[Fact]
+	public void ShouldObserveReset()
+	{
+		SourceList<int> list = [5, 1, 2, 4, 3];
+		using var observer = list.Sort().ObserveChanges();
+		list.ReplaceAll(2, 1, 3);
+		observer.LastObservedValue.OldItems.Should().BeEmpty();
+		observer.LastObservedValue.NewItems.Should().ContainInOrder(1, 2, 3);
+		observer.LastObservedValue.Reset.Should().BeTrue();
+		CheckDataIntegrity(observer, list);
+	}
+
 	private static void CheckDataIntegrity<T>(RecordingObserver<Change<T>> observer, IReadOnlyList<T> source)
 	{
 		var subscription = observer.Subscription;

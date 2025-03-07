@@ -20,6 +20,11 @@ internal sealed class SorterMiddleware<T> : ChangesMiddleware<T, T>, InnerListPr
 			HandleMove(change);
 		else
 		{
+			if (change.Reset)
+			{
+				HandleReset(change.NewItems);
+				return;
+			}
 			HandleOldItems(change.OldItems);
 			HandleNewItems(change.NewItems);
 		}
@@ -28,6 +33,25 @@ internal sealed class SorterMiddleware<T> : ChangesMiddleware<T, T>, InnerListPr
 	private readonly IComparer<T> _comparer;
 	private readonly List<T> _sorted = new();
 	private readonly List<int> _sourceToSortedIndexLookup = new();
+
+	private void HandleReset(PositionalReadOnlyList<T> items)
+	{
+		_sorted.Clear();
+		_sourceToSortedIndexLookup.Clear();
+		if (items.Count == 0)
+		{
+			DestinationObserver.OnNext(Change<T>.ResetChange);
+			return;
+		}
+		InsertItemsInOrder(items);
+		Change<T> change = new()
+		{
+			NewItems = new PositionalReadOnlyList<T>(_sorted.ToList(), 0),
+			Reset = true
+		};
+		DestinationObserver.OnNext(change);
+
+	}
 
 	private void HandleMove(Change<T> value)
 	{
