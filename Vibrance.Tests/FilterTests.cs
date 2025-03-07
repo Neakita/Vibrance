@@ -83,6 +83,19 @@ public sealed class FilterTests
 		bool Predicate(int value) => value % 2 == 0;
 	}
 
+	[Fact]
+	public void ShouldObserveReset()
+	{
+		SourceList<int> source = [1, 2, 3, 4];
+		using var observer = source.Filter(Predicate).ObserveChanges();
+		source.ReplaceAll(5, 6, 7, 8);
+		observer.LastObservedValue.Reset.Should().BeTrue();
+		observer.LastObservedValue.NewItems.Should().ContainInOrder(6, 8);
+		CheckLookupIntegrity(observer.Subscription, source, Predicate);
+		return;
+		bool Predicate(int value) => value % 2 == 0;
+	}
+
 	private static void CheckLookupIntegrity<T>(IDisposable subscription, IReadOnlyList<T> source, Func<T, bool> predicate)
 	{
 		var sortSubscription = (FilterMiddleware<T>)subscription;
