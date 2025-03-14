@@ -1,8 +1,9 @@
 using System.Collections.ObjectModel;
+using Vibrance.Changes;
 
-namespace Vibrance.Changes.Middlewares;
+namespace Vibrance.Middlewares;
 
-internal sealed class TransformerMiddleware<TSource, TDestination> : ChangesMiddleware<TSource, TDestination>, InnerListProvider<TDestination>
+internal sealed class TransformerMiddleware<TSource, TDestination> : IndexedChangesMiddleware<TSource, TDestination>, InnerListProvider<TDestination>
 {
 	IReadOnlyList<TDestination> InnerListProvider<TDestination>.Inner => _transformedItems;
 
@@ -14,23 +15,20 @@ internal sealed class TransformerMiddleware<TSource, TDestination> : ChangesMidd
 	private readonly Func<TSource, TDestination> _selector;
 	private readonly List<TDestination> _transformedItems = new();
 
-	protected override void HandleChange(Change<TSource> change)
+	protected override void HandleChange(IndexedChange<TSource> change)
 	{
 		var transformedChange = Transform(change);
 		transformedChange.ApplyToList(_transformedItems);
 		DestinationObserver.OnNext(transformedChange);
 	}
 
-	private Change<TDestination> Transform(Change<TSource> change)
+	private IndexedChange<TDestination> Transform(IndexedChange<TSource> change)
 	{
-		var oldItems = GetExistingItems(change.OldItems.StartIndex, change.OldItems.Count);
+		var oldItems = GetExistingItems(change.OldIndex, change.OldItems.Count);
 		var newItems = Transform(change.NewItems);
-		return new Change<TDestination>
-		{
-			OldItems = new PositionalReadOnlyList<TDestination>(oldItems, change.OldItems.StartIndex),
-			NewItems = new PositionalReadOnlyList<TDestination>(newItems, change.NewItems.StartIndex),
-			Reset = change.Reset
-		};
+		return change.Factory.CreateChange(
+			new IndexedItems<TDestination>(change.OldIndex, oldItems),
+			new IndexedItems<TDestination>(change.NewIndex, newItems));
 	}
 
 	private IReadOnlyList<TDestination> GetExistingItems(int index, int count)

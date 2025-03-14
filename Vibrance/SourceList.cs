@@ -4,11 +4,11 @@ using Vibrance.Utilities;
 
 namespace Vibrance;
 
-public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Change<T>>, InnerListProvider<T>
+public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<IndexedChange<T>>, InnerListProvider<T>
 {
 	public int Count => _items.Count;
 
-	public IDisposable Subscribe(IObserver<Change<T>> observer)
+	public IDisposable Subscribe(IObserver<IndexedChange<T>> observer)
 	{
 		SendInitialItems(observer);
 		_observers.Add(observer);
@@ -28,10 +28,11 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Chan
 		{
 			var oldItem = _items[index];
 			_items[index] = value;
-			Change<T> change = new()
+			IndexedReplace<T> change = new()
 			{
-				OldItems = new PositionalReadOnlyList<T>([oldItem], index),
-				NewItems = new PositionalReadOnlyList<T>([value], index)
+				Index = index,
+				OldItems = [oldItem],
+				NewItems = [value]
 			};
 			NotifyObservers(change);
 		}
@@ -68,11 +69,13 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Chan
 
 	public void Clear()
 	{
-		_items.Clear();
-		Change<T> change = new()
+		if (_items.Count == 0)
+			return;
+		Reset<T> change = new()
 		{
-			Reset = true
+			OldItems = _items
 		};
+		_items = new List<T>();
 		NotifyObservers(change);
 	}
 
@@ -103,9 +106,10 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Chan
 	public void Insert(int index, T item)
 	{
 		_items.Insert(index, item);
-		Change<T> change = new()
+		Insert<T> change = new()
 		{
-			NewItems = new PositionalReadOnlyList<T>([item], index)
+			Index = index,
+			Items = [item]
 		};
 		NotifyObservers(change);
 	}
@@ -114,9 +118,10 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Chan
 	{
 		var itemsList = items.ToList();
 		_items.InsertRange(index, itemsList);
-		Change<T> change = new()
+		Insert<T> change = new()
 		{
-			NewItems = new PositionalReadOnlyList<T>(itemsList, index)
+			Index = index,
+			Items = itemsList
 		};
 		NotifyObservers(change);
 	}
@@ -125,9 +130,10 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Chan
 	{
 		var item = _items[index];
 		_items.RemoveAt(index);
-		Change<T> change = new()
+		IndexedRemove<T> change = new()
 		{
-			OldItems = new PositionalReadOnlyList<T>([item], index)
+			Index = index,
+			Items = [item]
 		};
 		NotifyObservers(change);
 	}
@@ -138,9 +144,10 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Chan
 			return;
 		var items = _items.GetRange(index, count);
 		_items.RemoveRange(index, count);
-		Change<T> change = new()
+		IndexedRemove<T> change = new()
 		{
-			OldItems = new PositionalReadOnlyList<T>(items, index)
+			Index = index,
+			Items = items
 		};
 		NotifyObservers(change);
 	}
@@ -150,11 +157,11 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Chan
 		var item = _items[oldIndex];
 		_items.RemoveAt(oldIndex);
 		_items.Insert(newIndex, item);
-		IReadOnlyList<T> itemAsCollection = [item];
-		Change<T> change = new()
+		Move<T> change = new()
 		{
-			OldItems = new PositionalReadOnlyList<T>(itemAsCollection, oldIndex),
-			NewItems = new PositionalReadOnlyList<T>(itemAsCollection, newIndex)
+			OldIndex = oldIndex,
+			NewIndex = newIndex,
+			Items = [item]
 		};
 		NotifyObservers(change);
 	}
@@ -162,42 +169,43 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Chan
 	public void MoveRange(int oldIndex, int count, int newIndex)
 	{
 		var movedItems = _items.MoveRange(oldIndex, count, newIndex);
-		Change<T> change = new()
+		Move<T> change = new()
 		{
-			OldItems = new PositionalReadOnlyList<T>(movedItems, oldIndex),
-			NewItems = new PositionalReadOnlyList<T>(movedItems, newIndex)
+			OldIndex = oldIndex,
+			NewIndex = newIndex,
+			Items = movedItems
 		};
 		NotifyObservers(change);
 	}
 
 	public void ReplaceAll(params IEnumerable<T> items)
 	{
-		_items.Clear();
 		var itemsList = items.ToList();
-		_items.AddRange(itemsList);
-		Change<T> change = new()
+		Reset<T> change = new()
 		{
-			Reset = true,
-			NewItems = new PositionalReadOnlyList<T>(itemsList, 0)
+			OldItems = _items,
+			NewItems = itemsList
 		};
+		_items = new List<T>(itemsList);
 		NotifyObservers(change);
 	}
 
-	private readonly List<T> _items;
-	private readonly List<IObserver<Change<T>>> _observers = new();
+	private readonly List<IObserver<IndexedChange<T>>> _observers = new();
+	private List<T> _items;
 
-	private void SendInitialItems(IObserver<Change<T>> observer)
+	private void SendInitialItems(IObserver<IndexedChange<T>> observer)
 	{
 		if (_items.Count == 0)
 			return;
-		Change<T> initialChange = new()
+		Insert<T> initialChange = new()
 		{
-			NewItems = new PositionalReadOnlyList<T>(_items.ToList(), 0)
+			Index = 0,
+			Items = _items.ToList()
 		};
 		observer.OnNext(initialChange);
 	}
 
-	private void NotifyObservers(Change<T> change)
+	private void NotifyObservers(IndexedChange<T> change)
 	{
 		foreach (var observer in _observers)
 			observer.OnNext(change);

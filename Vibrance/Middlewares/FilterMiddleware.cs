@@ -1,6 +1,8 @@
-namespace Vibrance.Changes.Middlewares;
+using Vibrance.Changes;
 
-internal sealed class FilterMiddleware<T> : ChangesMiddleware<T, T>
+namespace Vibrance.Middlewares;
+
+internal sealed class FilterMiddleware<T> : IndexedChangesMiddleware<T, T>
 {
 	public FilterMiddleware(Func<T, bool> predicate)
 	{
@@ -9,67 +11,58 @@ internal sealed class FilterMiddleware<T> : ChangesMiddleware<T, T>
 
 	internal IReadOnlyList<int> SourceToFilteredIndexLookup => _sourceToFilteredIndexLookup;
 
-	protected override void HandleChange(Change<T> change)
+	protected override void HandleChange(IndexedChange<T> change)
 	{
-		var oldItems = HandleOldItems(change.OldItems);
-		var newItems = HandleNewItems(change.NewItems);
-		if (oldItems.Count == 0 && newItems.Count == 0 && !change.Reset)
-			return;
-		if (oldItems.StartIndex == newItems.StartIndex)
-			return;
-		Change<T> filteredChange = new()
-		{
-			OldItems = oldItems,
-			NewItems = newItems,
-			Reset = change.Reset
-		};
-		DestinationObserver.OnNext(filteredChange);
+		var oldItems = HandleOldItems(change.OldItemsAsIndexed());
+		var newItems = HandleNewItems(change.NewItemsAsIndexed());
+		if (change.Factory.TryCreateChange(oldItems, newItems, out var filteredChange))
+			DestinationObserver.OnNext(filteredChange);
 	}
 
 	private readonly Func<T, bool> _predicate;
 	private readonly List<int> _sourceToFilteredIndexLookup = new();
 
-	private PositionalReadOnlyList<T> HandleOldItems(PositionalReadOnlyList<T> items)
+	private IndexedItems<T> HandleOldItems(IndexedItems<T> items)
 	{
-		if (items.Count == 0)
-			return PositionalReadOnlyList<T>.Default;
+		if (items.List.Count == 0)
+			return IndexedItems<T>.Empty;
 		var filteredItems = CreateFilteredItemsList(items);
 		RemoveLookupIndexes(items, filteredItems.Count);
 		return filteredItems;
 	}
 
-	private void RemoveLookupIndexes(PositionalReadOnlyList<T> sourceItems, int filteredItemsCount)
+	private void RemoveLookupIndexes(IndexedItems<T> sourceItems, int filteredItemsCount)
 	{
-		_sourceToFilteredIndexLookup.RemoveRange(sourceItems.StartIndex, sourceItems.Count);
-		ShiftLookupIndexes(sourceItems.StartIndex, -filteredItemsCount);
+		_sourceToFilteredIndexLookup.RemoveRange(sourceItems.Index, sourceItems.Count);
+		ShiftLookupIndexes(sourceItems.Index, -filteredItemsCount);
 	}
 
-	private PositionalReadOnlyList<T> HandleNewItems(PositionalReadOnlyList<T> items)
+	private IndexedItems<T> HandleNewItems(IndexedItems<T> items)
 	{
 		if (items.Count == 0)
-			return PositionalReadOnlyList<T>.Default;
+			return IndexedItems<T>.Empty;
 		AppendLookup(items);
 		return CreateFilteredItemsList(items);
 	}
 
-	private void AppendLookup(PositionalReadOnlyList<T> items)
+	private void AppendLookup(IndexedItems<T> items)
 	{
 		var lookupIndexes = BuildLookup(items, out var filteredItemsCount);
-		InsertLookupIndexes(items.StartIndex, filteredItemsCount, lookupIndexes);
+		InsertLookupIndexes(items.Index, filteredItemsCount, lookupIndexes);
 	}
 
-	private List<int> BuildLookup(PositionalReadOnlyList<T> items, out int passedItemsCount)
+	private List<int> BuildLookup(IndexedItems<T> items, out int passedItemsCount)
 	{
 		passedItemsCount = 0;
 		List<int> lookup = new(items.Count);
 		int filteredStartIndex;
 		// weird edge case when adding items at the end
-		if (items.StartIndex == _sourceToFilteredIndexLookup.Count && items.StartIndex != 0)
-			filteredStartIndex = GetFilteredIndex(items.StartIndex - 1) + 1;
+		if (items.Index == _sourceToFilteredIndexLookup.Count && items.Index != 0)
+			filteredStartIndex = GetFilteredIndex(items.Index - 1) + 1;
 		else
-			filteredStartIndex = GetFilteredIndex(items.StartIndex);
+			filteredStartIndex = GetFilteredIndex(items.Index);
 		var filteredIndex = filteredStartIndex;
-		foreach (var item in items)
+		foreach (var item in items.List)
 		{
 			if (_predicate(item))
 			{
@@ -99,17 +92,17 @@ internal sealed class FilterMiddleware<T> : ChangesMiddleware<T, T>
 		}
 	}
 
-	private PositionalReadOnlyList<T> CreateFilteredItemsList(PositionalReadOnlyList<T> sourceItems)
+	private IndexedItems<T> CreateFilteredItemsList(IndexedItems<T> sourceItems)
 	{
 		List<T> filteredItems = new();
 		for (var i = 0; i < sourceItems.Count; i++)
 		{
-			var sourceIndex = sourceItems.StartIndex + i;
+			var sourceIndex = sourceItems.Index + i;
 			if (IsPassedFilterAt(sourceIndex))
-				filteredItems.Add(sourceItems[i]);
+				filteredItems.Add(sourceItems.List[i]);
 		}
-		var filteredStartIndex = GetFilteredIndex(sourceItems.StartIndex);
-		return new PositionalReadOnlyList<T>(filteredItems, filteredStartIndex);
+		var filteredStartIndex = GetFilteredIndex(sourceItems.Index);
+		return new IndexedItems<T>(filteredStartIndex, filteredItems);
 	}
 
 	private bool IsPassedFilterAt(int sourceIndex)

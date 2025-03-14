@@ -1,6 +1,7 @@
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using FluentAssertions;
+using Vibrance.Changes;
 using Vibrance.Tests.Utilities;
 
 namespace Vibrance.Tests;
@@ -136,7 +137,7 @@ public sealed class SourceListTests
 		list.RemoveRange(2, 2);
 		IEnumerable<int> removedItems = [3, 4];
 		observer.LastObservedValue.OldItems.Should().Contain(removedItems);
-		observer.LastObservedValue.OldItems.StartIndex.Should().Be(2);
+		observer.LastObservedValue.OldIndex.Should().Be(2);
 	}
 
 	[Fact]
@@ -147,7 +148,7 @@ public sealed class SourceListTests
 		IReadOnlyCollection<int> newItems = [4, 5];
 		list.InsertRange(2, newItems);
 		observer.LastObservedValue.NewItems.Should().Contain(newItems);
-		observer.LastObservedValue.NewItems.StartIndex.Should().Be(2);
+		observer.LastObservedValue.NewIndex.Should().Be(2);
 	}
 
 	[Fact]
@@ -156,7 +157,7 @@ public sealed class SourceListTests
 		SourceList<int> list = [1, 2, 3];
 		using var observer = list.ObserveChanges();
 		list.Clear();
-		observer.LastObservedValue.Reset.Should().BeTrue();
+		observer.LastObservedValue.Should().BeOfType<Reset<int>>();
 	}
 
 	[Fact]

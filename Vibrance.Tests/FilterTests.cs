@@ -1,6 +1,6 @@
 using FluentAssertions;
 using Vibrance.Changes;
-using Vibrance.Changes.Middlewares;
+using Vibrance.Middlewares;
 using Vibrance.Tests.Utilities;
 
 namespace Vibrance.Tests;
@@ -13,7 +13,7 @@ public sealed class FilterTests
 		SourceList<int> source = [1, 2, 3];
 		using var observer = source.Filter(Any).ObserveChanges();
 		observer.LastObservedValue.NewItems.Should().Contain([1, 2, 3]);
-		observer.LastObservedValue.NewItems.StartIndex.Should().Be(0);
+		observer.LastObservedValue.NewIndex.Should().Be(0);
 		CheckLookupIntegrity(observer.Subscription, source, Any);
 	}
 
@@ -23,7 +23,7 @@ public sealed class FilterTests
 		SourceList<int> source = [1, 2, 3, 4];
 		using var observer = source.Filter(IsEven).ObserveChanges();
 		observer.LastObservedValue.NewItems.Should().Contain([2, 4]);
-		observer.LastObservedValue.NewItems.StartIndex.Should().Be(0);
+		observer.LastObservedValue.NewIndex.Should().Be(0);
 		CheckLookupIntegrity(observer.Subscription, source, IsEven);
 	}
 
@@ -34,7 +34,7 @@ public sealed class FilterTests
 		using var observer = source.Filter(IsEven).ObserveChanges();
 		source.InsertRange(2, [5, 6, 7, 8]);
 		observer.LastObservedValue.NewItems.Should().Contain([6, 8]);
-		observer.LastObservedValue.NewItems.StartIndex.Should().Be(1);
+		observer.LastObservedValue.NewIndex.Should().Be(1);
 		CheckLookupIntegrity(observer.Subscription, source, IsEven);
 	}
 
@@ -45,7 +45,7 @@ public sealed class FilterTests
 		using var observer = source.Filter(Any).ObserveChanges();
 		source.RemoveRange(1, 2);
 		observer.LastObservedValue.OldItems.Should().Contain([2, 3]);
-		observer.LastObservedValue.OldItems.StartIndex.Should().Be(1);
+		observer.LastObservedValue.OldIndex.Should().Be(1);
 		CheckLookupIntegrity(observer.Subscription, source, Any);
 	}
 
@@ -56,7 +56,7 @@ public sealed class FilterTests
 		using var observer = source.Filter(IsEven).ObserveChanges();
 		source.RemoveRange(1, 3);
 		observer.LastObservedValue.OldItems.Should().Contain([2, 4]);
-		observer.LastObservedValue.OldItems.StartIndex.Should().Be(0);
+		observer.LastObservedValue.OldIndex.Should().Be(0);
 		CheckLookupIntegrity(observer.Subscription, source, IsEven);
 	}
 
@@ -77,7 +77,7 @@ public sealed class FilterTests
 		SourceList<int> source = [1, 2, 3, 4];
 		using var observer = source.Filter(IsEven).ObserveChanges();
 		source.ReplaceAll(5, 6, 7, 8);
-		observer.LastObservedValue.Reset.Should().BeTrue();
+		observer.LastObservedValue.Should().BeOfType<Reset<int>>();
 		observer.LastObservedValue.NewItems.Should().ContainInOrder(6, 8);
 		CheckLookupIntegrity(observer.Subscription, source, IsEven);
 	}
@@ -99,9 +99,9 @@ public sealed class FilterTests
 		SourceList<int> source = [1, 2, 3, 4];
 		using var observer = source.Filter(IsEven).ObserveChanges();
 		source.MoveRange(0, 2, 2);
-		observer.LastObservedValue.OldItems.StartIndex.Should().Be(0);
+		observer.LastObservedValue.OldIndex.Should().Be(0);
 		observer.LastObservedValue.NewItems.Should().Contain(2);
-		observer.LastObservedValue.NewItems.StartIndex.Should().Be(1);
+		observer.LastObservedValue.NewIndex.Should().Be(1);
 		CheckLookupIntegrity(observer.Subscription, source, IsEven);
 	}
 

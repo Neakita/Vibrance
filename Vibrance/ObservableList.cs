@@ -6,7 +6,7 @@ using Vibrance.Utilities;
 
 namespace Vibrance;
 
-internal sealed class ObservableList<T> : ReadOnlyObservableList<T>, ChangesHandler<T>
+internal sealed class ObservableList<T> : ReadOnlyObservableList<T>, IndexedChangesHandler<T>
 {
 	public event NotifyCollectionChangedEventHandler? CollectionChanged;
 	public event PropertyChangedEventHandler? PropertyChanged;
@@ -19,7 +19,7 @@ internal sealed class ObservableList<T> : ReadOnlyObservableList<T>, ChangesHand
 
 	public T this[int index] => _items[index];
 
-	public void HandleChange(Change<T> change)
+	public void HandleChange(IndexedChange<T> change)
 	{
 		int count = _items.Count;
 		change.ApplyToList(_items);
@@ -31,11 +31,11 @@ internal sealed class ObservableList<T> : ReadOnlyObservableList<T>, ChangesHand
 
 	private readonly List<T> _items = new();
 
-	private void NotifyCollectionChanged(Change<T> change)
+	private void NotifyCollectionChanged(IndexedChange<T> change)
 	{
 		if (CollectionChanged == null)
 			return;
-		var args = change.ToNotifyCollectionArgs();
+		var args = change.ToNotifyCollectionChangedEventArgs();
 		CollectionChanged.Invoke(this, args);
 	}
 

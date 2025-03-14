@@ -2,14 +2,14 @@ using Vibrance.Changes;
 
 namespace Vibrance.Utilities;
 
-internal sealed class ChangesHandlerObserver<T> : IObserver<Change<T>>
+internal sealed class ChangesHandlerObserver<T> : IObserver<IndexedChange<T>>
 {
-	public ChangesHandlerObserver(ChangesHandler<T> handler)
+	public ChangesHandlerObserver(IndexedChangesHandler<T> handler)
 	{
 		_handler = handler;
 	}
 
-	public void OnNext(Change<T> value)
+	public void OnNext(IndexedChange<T> value)
 	{
 		_handler.HandleChange(value);
 	}
@@ -23,5 +23,5 @@ internal sealed class ChangesHandlerObserver<T> : IObserver<Change<T>>
 		throw error;
 	}
 
-	private readonly ChangesHandler<T> _handler;
+	private readonly IndexedChangesHandler<T> _handler;
 }

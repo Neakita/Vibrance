@@ -1,9 +1,10 @@
+using Vibrance.Changes;
 using Vibrance.Utilities;
 using Range = Vibrance.Utilities.Range;
 
-namespace Vibrance.Changes.Middlewares;
+namespace Vibrance.Middlewares;
 
-internal sealed class SorterMiddleware<T> : ChangesMiddleware<T, T>, InnerListProvider<T>
+internal sealed class SorterMiddleware<T> : IndexedChangesMiddleware<T, T>, InnerListProvider<T>
 {
 	IReadOnlyList<T> InnerListProvider<T>.Inner => _sorted;
 
@@ -14,81 +15,77 @@ internal sealed class SorterMiddleware<T> : ChangesMiddleware<T, T>, InnerListPr
 
 	internal IReadOnlyList<int> SourceToSortedIndexLookup => _sourceToSortedIndexLookup;
 
-	protected override void HandleChange(Change<T> change)
+	protected override void HandleChange(IndexedChange<T> change)
 	{
-		if (change.IsMove())
-			HandleMove(change);
+		if (change is Move<T> move)
+			HandleMove(move);
+		else if (change is Reset<T> reset)
+			HandleReset(reset);
 		else
 		{
-			if (change.Reset)
-			{
-				HandleReset(change.NewItems);
-				return;
-			}
-			HandleOldItems(change.OldItems);
-			HandleNewItems(change.NewItems);
+			HandleOldItems(change.OldItemsAsIndexed());
+			HandleNewItems(change.NewItemsAsIndexed());
 		}
 	}
 
 	private readonly IComparer<T> _comparer;
-	private readonly List<T> _sorted = new();
 	private readonly List<int> _sourceToSortedIndexLookup = new();
+	private List<T> _sorted = new();
 
-	private void HandleReset(PositionalReadOnlyList<T> items)
+	private void HandleReset(Reset<T> items)
 	{
-		_sorted.Clear();
+		var oldSortedItems = _sorted;
+		_sorted = new List<T>();
 		_sourceToSortedIndexLookup.Clear();
-		if (items.Count == 0)
+		InsertItemsInOrder(items.NewItemsAsIndexed());
+		Reset<T> change = new()
 		{
-			DestinationObserver.OnNext(Change<T>.ResetChange);
-			return;
-		}
-		InsertItemsInOrder(items);
-		Change<T> change = new()
-		{
-			NewItems = new PositionalReadOnlyList<T>(_sorted.ToList(), 0),
-			Reset = true
+			OldItems = oldSortedItems,
+			NewItems = _sorted.ToList()
 		};
 		DestinationObserver.OnNext(change);
-
 	}
 
-	private void HandleMove(Change<T> value)
+	private void HandleMove(Move<T> value)
 	{
-		var oldIndex = value.OldItems.StartIndex;
-		var newIndex = value.NewItems.StartIndex;
-		_sourceToSortedIndexLookup.MoveRange(oldIndex, value.NewItems.Count, newIndex);
+		var oldIndex = value.OldIndex;
+		var newIndex = value.NewIndex;
+		_sourceToSortedIndexLookup.MoveRange(oldIndex, value.Items.Count, newIndex);
 	}
 
-	private void HandleOldItems(PositionalReadOnlyList<T> items)
+	private void HandleOldItems(IndexedItems<T> items)
 	{
-		if (items.Count == 0)
+		if (items.List.Count == 0)
 			return;
 		var changes = PrepareDeletionChanges(items);
 		RemoveOrderedItems(items);
 		NotifyObserver(changes);
 	}
 
-	private List<Change<T>> PrepareDeletionChanges(PositionalReadOnlyList<T> items)
+	private IReadOnlyList<IndexedChange<T>> PrepareDeletionChanges(IndexedItems<T> items)
 	{
-		return items
-			.Select((_, index) => _sourceToSortedIndexLookup[index + items.StartIndex])
+		return items.List
+			.Select((_, index) => _sourceToSortedIndexLookup[index + items.Index])
 			.Order()
 			.ToRanges()
 			.Select(ToChange)
 			.ToList();
 	}
 
-	private Change<T> ToChange(Range range)
+	private IndexedRemove<T> ToChange(Range range)
 	{
-		return new Change<T> { OldItems = new PositionalReadOnlyList<T>(_sorted.GetRange(range), range.Start)};
+		return new IndexedRemove<T>
+		{
+			Index = range.Start,
+			Items = _sorted.GetRange(range)
+		};
 	}
 
-	private void RemoveOrderedItems(PositionalReadOnlyList<T> items)
+	private void RemoveOrderedItems(IndexedItems<T> items)
 	{
-		for (var i = items.Count - 1; i >= 0; i--)
+		for (var i = items.List.Count - 1; i >= 0; i--)
 		{
-			var sourceIndex = items.StartIndex + i;
+			var sourceIndex = items.Index + i;
 			var sortedIndex = _sourceToSortedIndexLookup[sourceIndex];
 			_sorted.RemoveAt(sortedIndex);
 			RemoveIndexFromLookup(sourceIndex);
@@ -109,26 +106,26 @@ internal sealed class SorterMiddleware<T> : ChangesMiddleware<T, T>, InnerListPr
 				_sourceToSortedIndexLookup[i]--;
 	}
 
-	private void NotifyObserver(List<Change<T>> changes)
+	private void NotifyObserver(IEnumerable<IndexedChange<T>> changes)
 	{
 		foreach (var change in changes)
 			DestinationObserver.OnNext(change);
 	}
 
-	private void HandleNewItems(PositionalReadOnlyList<T> items)
+	private void HandleNewItems(IndexedItems<T> items)
 	{
-		if (items.Count == 0)
+		if (items.List.Count == 0)
 			return;
 		InsertItemsInOrder(items);
 		NotifyNewSortedItems(items);
 	}
 
-	private void InsertItemsInOrder(PositionalReadOnlyList<T> items)
+	private void InsertItemsInOrder(IndexedItems<T> items)
 	{
-		for (var i = 0; i < items.Count; i++)
+		for (var i = 0; i < items.List.Count; i++)
 		{
-			var item = items[i];
-			var sourceIndex = items.StartIndex + i;
+			var item = items.List[i];
+			var sourceIndex = items.Index + i;
 			var sortedIndex = InsertItemInOrder(item);
 			InsertIndexIntoLookup(sourceIndex, sortedIndex);
 		}
@@ -162,18 +159,19 @@ internal sealed class SorterMiddleware<T> : ChangesMiddleware<T, T>, InnerListPr
 				_sourceToSortedIndexLookup[i]++;
 	}
 
-	private void NotifyNewSortedItems(PositionalReadOnlyList<T> items)
+	private void NotifyNewSortedItems(IndexedItems<T> items)
 	{
-		var sortedRanges = items
-			.Select((_, index) => _sourceToSortedIndexLookup[index + items.StartIndex])
+		var sortedRanges = items.List
+			.Select((_, index) => _sourceToSortedIndexLookup[index + items.Index])
 			.Order()
 			.ToRanges();
 		foreach (var range in sortedRanges)
 		{
 			var sortedRange = _sorted.GetRange(range);
-			Change<T> change = new()
+			Insert<T> change = new()
 			{
-				NewItems = new PositionalReadOnlyList<T>(sortedRange, range.Start)
+				Index = range.Start,
+				Items = sortedRange
 			};
 			DestinationObserver.OnNext(change);
 		}

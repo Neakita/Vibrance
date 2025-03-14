@@ -21,9 +21,8 @@ public sealed class TransformTests
 		SourceList<int> source = [1, 2, 3];
 		using var observer = source.Transform(number => number.ToString()).ObserveChanges();
 		source.ReplaceAll(4, 5, 6);
-		observer.LastObservedValue.Reset.Should().BeTrue();
+		observer.LastObservedValue.Should().BeOfType<Reset<string>>();
 		observer.LastObservedValue.NewItems.Should().ContainInOrder("4", "5", "6");
-		observer.LastObservedValue.OldItems.Should().BeEmpty();
 		VerifyDataIntegrity(source, NumberToString, observer);
 	}
 
@@ -44,7 +43,7 @@ public sealed class TransformTests
 		using var observer = source.Transform(number => number.ToString()).ObserveChanges();
 		source.InsertRange(1, 4, 5, 6);
 		observer.LastObservedValue.NewItems.Should().ContainInOrder("4", "5", "6");
-		observer.LastObservedValue.NewItems.StartIndex.Should().Be(1);
+		observer.LastObservedValue.NewIndex.Should().Be(1);
 		VerifyDataIntegrity(source, NumberToString, observer);
 	}
 
@@ -55,9 +54,9 @@ public sealed class TransformTests
 		using var observer = source.Transform(NumberToString).ObserveChanges();
 		source.MoveRange(0, 2, 1);
 		var observation = observer.LastObservedValue;
-		observation.OldItems.StartIndex.Should().Be(0);
+		observation.OldIndex.Should().Be(0);
 		observation.OldItems.Should().ContainInOrder("1", "2");
-		observation.NewItems.StartIndex.Should().Be(1);
+		observation.NewIndex.Should().Be(1);
 		observation.NewItems.Should().ContainInOrder("1", "2");
 		VerifyDataIntegrity(source, NumberToString, observer);
 	}
@@ -70,7 +69,7 @@ public sealed class TransformTests
 	private static void VerifyDataIntegrity<TSource, TDestination>(
 		IReadOnlyList<TSource> source,
 		Func<TSource, TDestination> selector,
-		RecordingObserver<Change<TDestination>> observer)
+		RecordingObserver<IndexedChange<TDestination>> observer)
 	{
 		var transformed = ((InnerListProvider<TDestination>)observer.Subscription).Inner;
 		transformed.Should().ContainInOrder(source.Select(selector));

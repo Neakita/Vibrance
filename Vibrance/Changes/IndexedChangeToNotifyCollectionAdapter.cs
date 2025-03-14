@@ -5,21 +5,21 @@ using Vibrance.Utilities;
 
 namespace Vibrance.Changes;
 
-internal sealed class ChangeToNotifyCollectionAdapter<T> : ReadOnlyObservableList<T>, ChangesHandler<T>
+internal sealed class IndexedChangeToNotifyCollectionAdapter<T> : ReadOnlyObservableList<T>, IndexedChangesHandler<T>
 {
 	public event NotifyCollectionChangedEventHandler? CollectionChanged;
 	public event PropertyChangedEventHandler? PropertyChanged;
 
-	public ChangeToNotifyCollectionAdapter(IReadOnlyList<T> list)
+	public IndexedChangeToNotifyCollectionAdapter(IReadOnlyList<T> list)
 	{
 		_list = list;
 	}
 
-	public void HandleChange(Change<T> change)
+	public void HandleChange(IndexedChange<T> change)
 	{
 		if (CollectionChanged != null)
 		{
-			var args = change.ToNotifyCollectionArgs();
+			var args = change.ToNotifyCollectionChangedEventArgs();
 			CollectionChanged.Invoke(this, args);
 		}
 		if (change.OldItems.Count != change.NewItems.Count)

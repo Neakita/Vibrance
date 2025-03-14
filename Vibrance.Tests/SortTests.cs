@@ -1,6 +1,6 @@
 using FluentAssertions;
 using Vibrance.Changes;
-using Vibrance.Changes.Middlewares;
+using Vibrance.Middlewares;
 using Vibrance.Tests.Utilities;
 
 namespace Vibrance.Tests;
@@ -31,7 +31,7 @@ public sealed class SortTests
 		SourceList<int> list = [1, 2, 4];
 		using var observer = list.Sort().ObserveChanges();
 		list.Add(3);
-		observer.LastObservedValue.NewItems.StartIndex.Should().Be(2);
+		observer.LastObservedValue.NewIndex.Should().Be(2);
 		CheckDataIntegrity(observer, list);
 	}
 
@@ -42,7 +42,7 @@ public sealed class SortTests
 		using var observer = list.Sort().ObserveChanges();
 		list.Remove(2);
 		observer.LastObservedValue.OldItems.Should().Contain(2);
-		observer.LastObservedValue.OldItems.StartIndex.Should().Be(1);
+		observer.LastObservedValue.OldIndex.Should().Be(1);
 		CheckDataIntegrity(observer, list);
 	}
 
@@ -53,7 +53,7 @@ public sealed class SortTests
 		using var observer = list.Sort().ObserveChanges();
 		list.RemoveRange(1, 2);
 		observer.LastObservedValue.OldItems.Should().Contain([2, 3]);
-		observer.LastObservedValue.OldItems.StartIndex.Should().Be(1);
+		observer.LastObservedValue.OldIndex.Should().Be(1);
 		CheckDataIntegrity(observer, list);
 	}
 
@@ -64,7 +64,7 @@ public sealed class SortTests
 		using var observer = list.Sort().ObserveChanges();
 		list.RemoveRange(1, 2);
 		observer.LastObservedValue.OldItems.Should().ContainInOrder(1, 2);
-		observer.LastObservedValue.OldItems.StartIndex.Should().Be(0);
+		observer.LastObservedValue.OldIndex.Should().Be(0);
 		CheckDataIntegrity(observer, list);
 	}
 
@@ -106,13 +106,13 @@ public sealed class SortTests
 		SourceList<int> list = [5, 1, 2, 4, 3];
 		using var observer = list.Sort().ObserveChanges();
 		list.ReplaceAll(2, 1, 3);
-		observer.LastObservedValue.OldItems.Should().BeEmpty();
+		observer.LastObservedValue.OldItems.Should().ContainInOrder(1, 2, 3, 4, 5);
 		observer.LastObservedValue.NewItems.Should().ContainInOrder(1, 2, 3);
-		observer.LastObservedValue.Reset.Should().BeTrue();
+		observer.LastObservedValue.Should().BeOfType<Reset<int>>();
 		CheckDataIntegrity(observer, list);
 	}
 
-	private static void CheckDataIntegrity<T>(RecordingObserver<Change<T>> observer, IReadOnlyList<T> source)
+	private static void CheckDataIntegrity<T>(RecordingObserver<IndexedChange<T>> observer, IReadOnlyList<T> source)
 	{
 		var subscription = observer.Subscription;
 		var sorted = ((InnerListProvider<T>)subscription).Inner;

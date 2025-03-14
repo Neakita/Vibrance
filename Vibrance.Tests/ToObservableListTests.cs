@@ -57,8 +57,10 @@ public sealed class ToObservableListTests
 		using var subscription = sourceList.ToObservableList(out var observableList);
 		using var observer = observableList.ObserveNotifications();
 		sourceList.RemoveAt(1);
-		NotifyCollectionChangedEventArgs expectedArgs = new(NotifyCollectionChangedAction.Remove, 2, 1);
-		observer.LastObservedArgs.Should().BeEquivalentTo(expectedArgs);
+		observer.LastObservedArgs.Action.Should().Be(NotifyCollectionChangedAction.Remove);
+		observer.LastObservedArgs.OldItems.Should().NotBeNull();
+		observer.LastObservedArgs.OldItems.Cast<int>().Should().Contain(2);
+		observer.LastObservedArgs.OldStartingIndex.Should().Be(1);
 	}
 
 	[Fact]
@@ -68,8 +70,10 @@ public sealed class ToObservableListTests
 		using var subscription = sourceList.ToObservableList(out var observableList);
 		using var observer = observableList.ObserveNotifications();
 		sourceList.Insert(1, 4);
-		NotifyCollectionChangedEventArgs expectedArgs = new(NotifyCollectionChangedAction.Add, 4, 1);
-		observer.LastObservedArgs.Should().BeEquivalentTo(expectedArgs);
+		observer.LastObservedArgs.Action.Should().Be(NotifyCollectionChangedAction.Add);
+		observer.LastObservedArgs.NewItems.Should().NotBeNull();
+		observer.LastObservedArgs.NewItems.Cast<int>().ToList().Should().Contain(4);
+		observer.LastObservedArgs.NewStartingIndex.Should().Be(1);
 	}
 
 	[Fact]

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using Vibrance.Changes;
+using Vibrance.Changes.Factories;
 
 namespace Vibrance.NotifyCollection;
 
@@ -36,12 +37,10 @@ internal sealed class NotifyCollectionSubscription<T> : IDisposable
 	{
 		var oldItems = GetItems(args.OldItems);
 		var newItems = GetItems(args.NewItems);
-		return new Change<T>
-		{
-			OldItems = new PositionalReadOnlyList<T>(oldItems, args.OldStartingIndex),
-			NewItems = new PositionalReadOnlyList<T>(newItems, args.NewStartingIndex),
-			Reset = args.Action == NotifyCollectionChangedAction.Reset
-		};
+		var factory = IndexedChangeFactories.GetByNotifyCollectionChangedAction(args.Action);
+		return factory.CreateChange(
+			new IndexedItems<T>(args.OldStartingIndex, oldItems),
+			new IndexedItems<T>(args.NewStartingIndex, newItems));
 	}
 
 	private static IReadOnlyList<T> GetItems(IList? list)
