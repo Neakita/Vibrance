@@ -101,6 +101,8 @@ internal sealed class FilterMiddleware<T> : IndexedChangesMiddleware<T, T>
 			if (IsPassedFilterAt(sourceIndex))
 				filteredItems.Add(sourceItems.List[i]);
 		}
+		if (filteredItems.Count == 0)
+			return IndexedItems<T>.Empty;
 		var filteredStartIndex = GetFilteredIndex(sourceItems.Index);
 		return new IndexedItems<T>(filteredStartIndex, filteredItems);
 	}

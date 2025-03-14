@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
 
 namespace Vibrance.Changes;
 
@@ -12,6 +13,8 @@ public readonly struct IndexedItems<T>
 
 	public IndexedItems(int index, IReadOnlyList<T> list)
 	{
+		if ((index == -1) ^ (list.Count == 0))
+			throw new ArgumentException($"the {nameof(index)} and the {nameof(list)} should together represent either an emptiness or significance");
 		Index = index;
 		List = list;
 	}
