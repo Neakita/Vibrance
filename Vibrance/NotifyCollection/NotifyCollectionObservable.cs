@@ -23,7 +23,7 @@ internal sealed class NotifyCollectionObservable<T> : IObservable<Change<T>>
 	{
 		if (collection.Count == 0)
 			return;
-		Insert<T> change = new()
+		Insertion<T> change = new()
 		{
 			Index = 0,
 			Items = collection.ToList()

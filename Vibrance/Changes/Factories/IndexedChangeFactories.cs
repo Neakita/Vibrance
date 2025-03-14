@@ -8,9 +8,9 @@ internal static class IndexedChangeFactories
 	{
 		return action switch
 		{
-			NotifyCollectionChangedAction.Add => InsertFactory.Instance,
-			NotifyCollectionChangedAction.Remove => IndexedRemoveFactory.Instance,
-			NotifyCollectionChangedAction.Replace => IndexedReplaceFactory.Instance,
+			NotifyCollectionChangedAction.Add => InsertionFactory.Instance,
+			NotifyCollectionChangedAction.Remove => IndexedRemovalFactory.Instance,
+			NotifyCollectionChangedAction.Replace => IndexedReplacementFactory.Instance,
 			NotifyCollectionChangedAction.Move => MoveFactory.Instance,
 			NotifyCollectionChangedAction.Reset => ResetFactory.Instance,
 			_ => throw new ArgumentOutOfRangeException(nameof(action), action, null)

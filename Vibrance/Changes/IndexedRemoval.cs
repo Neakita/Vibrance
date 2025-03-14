@@ -5,7 +5,7 @@ using Vibrance.Changes.Factories;
 
 namespace Vibrance.Changes;
 
-public sealed class IndexedRemove<T> : IndexedChange<T>
+public sealed class IndexedRemoval<T> : IndexedChange<T>
 {
 	public required int Index
 	{
@@ -28,7 +28,7 @@ public sealed class IndexedRemove<T> : IndexedChange<T>
 	int IndexedChange<T>.OldIndex => Index;
 	int IndexedChange<T>.NewIndex => -1;
 
-	IndexedChangeFactory IndexedChange<T>.Factory => IndexedRemoveFactory.Instance;
+	IndexedChangeFactory IndexedChange<T>.Factory => IndexedRemovalFactory.Instance;
 
 	NotifyCollectionChangedEventArgs IndexedChange<T>.ToNotifyCollectionChangedEventArgs()
 	{

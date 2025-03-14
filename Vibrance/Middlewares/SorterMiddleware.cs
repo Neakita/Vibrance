@@ -72,9 +72,9 @@ internal sealed class SorterMiddleware<T> : IndexedChangesMiddleware<T, T>, Inne
 			.ToList();
 	}
 
-	private IndexedRemove<T> ToChange(Range range)
+	private IndexedRemoval<T> ToChange(Range range)
 	{
-		return new IndexedRemove<T>
+		return new IndexedRemoval<T>
 		{
 			Index = range.Start,
 			Items = _sorted.GetRange(range)
@@ -168,7 +168,7 @@ internal sealed class SorterMiddleware<T> : IndexedChangesMiddleware<T, T>, Inne
 		foreach (var range in sortedRanges)
 		{
 			var sortedRange = _sorted.GetRange(range);
-			Insert<T> change = new()
+			Insertion<T> change = new()
 			{
 				Index = range.Start,
 				Items = sortedRange

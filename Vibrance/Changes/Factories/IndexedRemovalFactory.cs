@@ -1,8 +1,8 @@
 namespace Vibrance.Changes.Factories;
 
-internal sealed class IndexedRemoveFactory : IndexedChangeFactory
+internal sealed class IndexedRemovalFactory : IndexedChangeFactory
 {
-	public static IndexedRemoveFactory Instance { get; } = new();
+	public static IndexedRemovalFactory Instance { get; } = new();
 
 	public bool CanCreateChange<T>(IndexedItems<T> oldItems, IndexedItems<T> newItems)
 	{
@@ -11,7 +11,7 @@ internal sealed class IndexedRemoveFactory : IndexedChangeFactory
 
 	public IndexedChange<T> CreateChange<T>(IndexedItems<T> oldItems, IndexedItems<T> newItems)
 	{
-		return new IndexedRemove<T>
+		return new IndexedRemoval<T>
 		{
 			Index = oldItems.Index,
 			Items = oldItems.List

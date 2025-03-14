@@ -28,7 +28,7 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Inde
 		{
 			var oldItem = _items[index];
 			_items[index] = value;
-			IndexedReplace<T> change = new()
+			IndexedReplacement<T> change = new()
 			{
 				Index = index,
 				OldItems = [oldItem],
@@ -106,7 +106,7 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Inde
 	public void Insert(int index, T item)
 	{
 		_items.Insert(index, item);
-		Insert<T> change = new()
+		Insertion<T> change = new()
 		{
 			Index = index,
 			Items = [item]
@@ -118,7 +118,7 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Inde
 	{
 		var itemsList = items.ToList();
 		_items.InsertRange(index, itemsList);
-		Insert<T> change = new()
+		Insertion<T> change = new()
 		{
 			Index = index,
 			Items = itemsList
@@ -130,7 +130,7 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Inde
 	{
 		var item = _items[index];
 		_items.RemoveAt(index);
-		IndexedRemove<T> change = new()
+		IndexedRemoval<T> change = new()
 		{
 			Index = index,
 			Items = [item]
@@ -144,7 +144,7 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Inde
 			return;
 		var items = _items.GetRange(index, count);
 		_items.RemoveRange(index, count);
-		IndexedRemove<T> change = new()
+		IndexedRemoval<T> change = new()
 		{
 			Index = index,
 			Items = items
@@ -197,7 +197,7 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Inde
 	{
 		if (_items.Count == 0)
 			return;
-		Insert<T> initialChange = new()
+		Insertion<T> initialChange = new()
 		{
 			Index = 0,
 			Items = _items.ToList()

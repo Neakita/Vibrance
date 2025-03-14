@@ -5,7 +5,7 @@ using Vibrance.Changes.Factories;
 
 namespace Vibrance.Changes;
 
-public sealed class Insert<T> : IndexedChange<T>
+public sealed class Insertion<T> : IndexedChange<T>
 {
 	public required int Index
 	{
@@ -37,7 +37,7 @@ public sealed class Insert<T> : IndexedChange<T>
 	IReadOnlyList<T> Change<T>.OldItems => ReadOnlyCollection<T>.Empty;
 	IReadOnlyList<T> Change<T>.NewItems => Items;
 
-	IndexedChangeFactory IndexedChange<T>.Factory => InsertFactory.Instance;
+	IndexedChangeFactory IndexedChange<T>.Factory => InsertionFactory.Instance;
 
 	NotifyCollectionChangedEventArgs IndexedChange<T>.ToNotifyCollectionChangedEventArgs()
 	{

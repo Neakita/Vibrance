@@ -4,7 +4,7 @@ using Vibrance.Changes.Factories;
 
 namespace Vibrance.Changes;
 
-public sealed class IndexedReplace<T> : IndexedChange<T>
+public sealed class IndexedReplacement<T> : IndexedChange<T>
 {
 	public required int Index
 	{
@@ -49,7 +49,7 @@ public sealed class IndexedReplace<T> : IndexedChange<T>
 	int IndexedChange<T>.OldIndex => Index;
 	int IndexedChange<T>.NewIndex => Index;
 
-	IndexedChangeFactory IndexedChange<T>.Factory => IndexedReplaceFactory.Instance;
+	IndexedChangeFactory IndexedChange<T>.Factory => IndexedReplacementFactory.Instance;
 
 	NotifyCollectionChangedEventArgs IndexedChange<T>.ToNotifyCollectionChangedEventArgs()
 	{
