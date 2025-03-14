@@ -50,7 +50,7 @@ public sealed class Move<T> : IndexedChange<T>
 
 	IndexedChangeFactory IndexedChange<T>.Factory => MoveFactory.Instance;
 
-	NotifyCollectionChangedEventArgs Change<T>.ToNotifyCollectionChangedEventArgs()
+	NotifyCollectionChangedEventArgs IndexedChange<T>.ToNotifyCollectionChangedEventArgs()
 	{
 		return new NotifyCollectionChangedEventArgs(
 			NotifyCollectionChangedAction.Move,

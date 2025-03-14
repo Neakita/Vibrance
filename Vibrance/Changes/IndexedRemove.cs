@@ -30,7 +30,7 @@ public sealed class IndexedRemove<T> : IndexedChange<T>
 
 	IndexedChangeFactory IndexedChange<T>.Factory => IndexedRemoveFactory.Instance;
 
-	NotifyCollectionChangedEventArgs Change<T>.ToNotifyCollectionChangedEventArgs()
+	NotifyCollectionChangedEventArgs IndexedChange<T>.ToNotifyCollectionChangedEventArgs()
 	{
 		return new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, (IList)Items, Index);
 	}

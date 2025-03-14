@@ -51,7 +51,7 @@ public sealed class IndexedReplace<T> : IndexedChange<T>
 
 	IndexedChangeFactory IndexedChange<T>.Factory => IndexedReplaceFactory.Instance;
 
-	NotifyCollectionChangedEventArgs Change<T>.ToNotifyCollectionChangedEventArgs()
+	NotifyCollectionChangedEventArgs IndexedChange<T>.ToNotifyCollectionChangedEventArgs()
 	{
 		return new NotifyCollectionChangedEventArgs(
 			NotifyCollectionChangedAction.Replace,

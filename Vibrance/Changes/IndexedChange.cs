@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using Vibrance.Changes.Factories;
 
 namespace Vibrance.Changes;
@@ -8,4 +9,6 @@ public interface IndexedChange<out T> : Change<T>
 
 	int OldIndex { get; }
 	int NewIndex { get; }
+
+	NotifyCollectionChangedEventArgs ToNotifyCollectionChangedEventArgs();
 }

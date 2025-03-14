@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using Vibrance.Changes.Factories;
@@ -25,7 +24,7 @@ public sealed class Reset<T> : IndexedChange<T>
 
 	IndexedChangeFactory IndexedChange<T>.Factory => ResetFactory.Instance;
 
-	NotifyCollectionChangedEventArgs Change<T>.ToNotifyCollectionChangedEventArgs()
+	NotifyCollectionChangedEventArgs IndexedChange<T>.ToNotifyCollectionChangedEventArgs()
 	{
 		return new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset);
 	}
