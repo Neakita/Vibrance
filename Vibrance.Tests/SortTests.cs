@@ -112,6 +112,15 @@ public sealed class SortTests
 		CheckDataIntegrity(observer, list);
 	}
 
+	[Fact]
+	public void ShouldInsertUnorderedItems()
+	{
+		SourceList<int> list = [1, 3, 6];
+		using var observer = list.Sort().ObserveChanges();
+		list.AddRange(5, 2, 4);
+		CheckDataIntegrity(observer, list);
+	}
+
 	private static void CheckDataIntegrity<T>(RecordingObserver<IndexedChange<T>> observer, IReadOnlyList<T> source)
 	{
 		var subscription = observer.Subscription;

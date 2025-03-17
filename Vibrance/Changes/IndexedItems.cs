@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Runtime.CompilerServices;
 
 namespace Vibrance.Changes;
 
@@ -10,6 +9,7 @@ public readonly struct IndexedItems<T>
 	public int Index { get; }
 	public IReadOnlyList<T> List { get; }
 	public int Count => List.Count;
+	public bool IsEmpty => Count == 0;
 
 	public IndexedItems(int index, IReadOnlyList<T> list)
 	{
