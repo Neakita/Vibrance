@@ -121,6 +121,15 @@ public sealed class SortTests
 		CheckDataIntegrity(observer, list);
 	}
 
+	[Fact]
+	public void ShouldAddDuplicate()
+	{
+		SourceList<int> list = [1, 2, 3];
+		using var observer = list.Sort().ObserveChanges();
+		list.Add(1);
+		CheckDataIntegrity(observer, list);
+	}
+
 	private static void CheckDataIntegrity<T>(RecordingObserver<IndexedChange<T>> observer, IReadOnlyList<T> source)
 	{
 		var subscription = observer.Subscription;

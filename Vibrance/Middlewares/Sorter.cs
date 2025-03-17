@@ -143,8 +143,8 @@ internal sealed class Sorter<T> : IndexedChangesMiddleware<T, T>, InnerListProvi
 	private int FindIndexToInsert(T item)
 	{
 		var index = _sorted.BinarySearch(item, _comparer);
-		if (index >= 0)
-			throw new ArgumentException("Item already existing");
-		return ~index;
+		if (index < 0)
+			index = ~index;
+		return index;
 	}
 }
