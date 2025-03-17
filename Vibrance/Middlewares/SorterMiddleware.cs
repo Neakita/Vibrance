@@ -101,28 +101,35 @@ internal sealed class SorterMiddleware<T> : IndexedChangesMiddleware<T, T>, Inne
 
 	private IReadOnlyList<Range> HandleNewItems(IndexedItems<T> items)
 	{
-		if (items.List.Count == 0)
+		if (items.IsEmpty)
 			return ReadOnlyCollection<Range>.Empty;
-		InsertItemsInOrder(items);
-		return ExistingItemsToSortedRanges(items);
+		return InsertItemsInOrder(items);
 	}
 
-	private void InsertItemsInOrder(IndexedItems<T> items)
+	private List<Range> InsertItemsInOrder(IndexedItems<T> sourceItems)
 	{
-		for (var i = 0; i < items.List.Count; i++)
+		List<(int sortedIndex, List<(T item, int sourceLocalIndex)> items)> sortedGroups = sourceItems.List
+			.Select((item, sourceIndex) => (item, sourceIndex))
+			.GroupBy(tuple => FindIndexToInsert(tuple.item), (sortedIndex, items) => (sortedIndex, items: items.OrderBy(tuple => tuple.item, _comparer).ToList()))
+			.OrderBy(tuple => tuple.sortedIndex)
+			.ToList();
+		int offset = 0;
+		int[] lookup = new int[sourceItems.Count];
+		List<Range> result = new(sortedGroups.Count);
+		foreach (var (sortedIndex, sortedItems) in sortedGroups)
 		{
-			var item = items.List[i];
-			var sourceIndex = items.Index + i;
-			var sortedIndex = InsertItemInOrder(item);
-			InsertIndexIntoLookup(sourceIndex, sortedIndex);
+			var itemsList = sortedItems.Select(tuple => tuple.item).ToList();
+			_sorted.InsertRange(sortedIndex + offset, itemsList);
+			for (var i = 0; i < sortedItems.Count; i++)
+			{
+				lookup[sortedItems[i].sourceLocalIndex] = sortedIndex + i + offset;
+				ShiftIndexesLookup(sortedIndex + i + offset, 1);
+			}
+			result.Add(Range.FromCount(sortedIndex + offset, sortedItems.Count));
+			offset += sortedItems.Count;
 		}
-	}
-
-	private int InsertItemInOrder(T item)
-	{
-		var index = FindIndexToInsert(item);
-		_sorted.Insert(index, item);
-		return index;
+		_sourceToSortedIndexLookup.InsertRange(sourceItems.Index, lookup);
+		return result;
 	}
 
 	private int FindIndexToInsert(T item)
@@ -131,28 +138,5 @@ internal sealed class SorterMiddleware<T> : IndexedChangesMiddleware<T, T>, Inne
 		if (index >= 0)
 			throw new ArgumentException("Item already existing");
 		return ~index;
-	}
-
-	private void InsertIndexIntoLookup(int sourceIndex, int sortedIndex)
-	{
-		ShiftIndexesLookupForInsertion(sortedIndex);
-		_sourceToSortedIndexLookup.Insert(sourceIndex, sortedIndex);
-	}
-
-	private void ShiftIndexesLookupForInsertion(int sortedIndex)
-	{
-		for (var i = 0; i < _sourceToSortedIndexLookup.Count; i++)
-			if (_sourceToSortedIndexLookup[i] >= sortedIndex)
-				_sourceToSortedIndexLookup[i]++;
-	}
-
-	private List<Range> ExistingItemsToSortedRanges(IndexedItems<T> items)
-	{
-		var sortedRanges = items.List
-			.Select((_, index) => _sourceToSortedIndexLookup[index + items.Index])
-			.Order()
-			.ToRanges()
-			.ToList();
-		return sortedRanges;
 	}
 }
