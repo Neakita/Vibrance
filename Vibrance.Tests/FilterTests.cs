@@ -111,7 +111,7 @@ public sealed class FilterTests
 
 	private static void CheckLookupIntegrity<T>(IDisposable subscription, IReadOnlyList<T> source, Func<T, bool> predicate)
 	{
-		var sortSubscription = (FilterMiddleware<T>)subscription;
+		var sortSubscription = (Filter<T>)subscription;
 		var lookup = sortSubscription.SourceToFilteredIndexLookup;
 		var filteredIndex = 0;
 		List<int> expectedLookup = new(source.Count);

@@ -8,7 +8,7 @@ public static class ObservableChangesExtensions
 	public static IObservable<IndexedChange<TDestination>> Transform<TSource, TDestination>(
 		this IObservable<IndexedChange<TSource>> source,
 		Func<TSource, TDestination> selector) =>
-		Observable.Create<IndexedChange<TDestination>>(observer => new TransformerMiddleware<TSource, TDestination>(selector)
+		Observable.Create<IndexedChange<TDestination>>(observer => new Transformer<TSource, TDestination>(selector)
 		{
 			DestinationObserver = observer,
 			SourceObservable = source
@@ -39,14 +39,14 @@ public static class ObservableChangesExtensions
 	}
 
 	public static IObservable<IndexedChange<T>> Sort<T>(this IObservable<IndexedChange<T>> source, IComparer<T>? comparer = null) =>
-		Observable.Create<IndexedChange<T>>(observer => new SorterMiddleware<T>(comparer)
+		Observable.Create<IndexedChange<T>>(observer => new Sorter<T>(comparer)
 		{
 			DestinationObserver = observer,
 			SourceObservable = source
 		});
 
 	public static IObservable<IndexedChange<T>> Filter<T>(this IObservable<IndexedChange<T>> source, Func<T, bool> predicate) =>
-		Observable.Create<IndexedChange<T>>(observer => new FilterMiddleware<T>(predicate)
+		Observable.Create<IndexedChange<T>>(observer => new Filter<T>(predicate)
 		{
 			DestinationObserver = observer,
 			SourceObservable = source

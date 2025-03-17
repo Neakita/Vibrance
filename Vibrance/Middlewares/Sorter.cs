@@ -5,11 +5,11 @@ using Range = Vibrance.Utilities.Range;
 
 namespace Vibrance.Middlewares;
 
-internal sealed class SorterMiddleware<T> : IndexedChangesMiddleware<T, T>, InnerListProvider<T>
+internal sealed class Sorter<T> : IndexedChangesMiddleware<T, T>, InnerListProvider<T>
 {
 	IReadOnlyList<T> InnerListProvider<T>.Inner => _sorted;
 
-	public SorterMiddleware(IComparer<T>? comparer)
+	public Sorter(IComparer<T>? comparer)
 	{
 		_comparer = comparer ?? Comparer<T>.Default;
 	}

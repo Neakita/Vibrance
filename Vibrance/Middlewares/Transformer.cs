@@ -3,11 +3,11 @@ using Vibrance.Changes;
 
 namespace Vibrance.Middlewares;
 
-internal sealed class TransformerMiddleware<TSource, TDestination> : IndexedChangesMiddleware<TSource, TDestination>, InnerListProvider<TDestination>
+internal sealed class Transformer<TSource, TDestination> : IndexedChangesMiddleware<TSource, TDestination>, InnerListProvider<TDestination>
 {
 	IReadOnlyList<TDestination> InnerListProvider<TDestination>.Inner => _transformedItems;
 
-	public TransformerMiddleware(Func<TSource, TDestination> selector)
+	public Transformer(Func<TSource, TDestination> selector)
 	{
 		_selector = selector;
 	}

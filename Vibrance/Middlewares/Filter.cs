@@ -2,9 +2,9 @@ using Vibrance.Changes;
 
 namespace Vibrance.Middlewares;
 
-internal sealed class FilterMiddleware<T> : IndexedChangesMiddleware<T, T>
+internal sealed class Filter<T> : IndexedChangesMiddleware<T, T>
 {
-	public FilterMiddleware(Func<T, bool> predicate)
+	public Filter(Func<T, bool> predicate)
 	{
 		_predicate = predicate;
 	}
