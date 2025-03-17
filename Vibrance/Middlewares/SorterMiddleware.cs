@@ -22,13 +22,8 @@ internal sealed class SorterMiddleware<T> : IndexedChangesMiddleware<T, T>, Inne
 		var insertionRanges = HandleNewItems(change.NewItemsAsIndexed());
 		if (change is Move<T>)
 			return;
-		if (removals is [var singleRemoval] && insertionRanges is [var singleInsertionRange])
-		{
-			var sortedChange = change.Factory.CreateChange(singleRemoval,
-				new IndexedItems<T>(singleInsertionRange.Start, _sorted.GetRange(singleInsertionRange)));
-			DestinationObserver.OnNext(sortedChange);
+		if (TryNotifySingleChange(change, removals, insertionRanges))
 			return;
-		}
 		foreach (var removal in removals)
 			DestinationObserver.OnNext(new IndexedRemoval<T>
 			{
@@ -45,6 +40,19 @@ internal sealed class SorterMiddleware<T> : IndexedChangesMiddleware<T, T>, Inne
 			};
 			DestinationObserver.OnNext(insertion);
 		}
+	}
+
+	private bool TryNotifySingleChange(IndexedChange<T> change, IReadOnlyList<IndexedItems<T>> removals, IReadOnlyList<Range> insertionRanges)
+	{
+		if (removals.Count > 1 || insertionRanges.Count > 1)
+			return false;
+		var singleRemoval = removals.SingleOrDefault(IndexedItems<T>.Empty);
+		var singleInsertion = insertionRanges is [var singleInsertionRange]
+			? new IndexedItems<T>(singleInsertionRange.Start, _sorted.GetRange(singleInsertionRange))
+			: IndexedItems<T>.Empty;
+		var sortedChange = change.Factory.CreateChange(singleRemoval, singleInsertion);
+		DestinationObserver.OnNext(sortedChange);
+		return true;
 	}
 
 	private readonly IComparer<T> _comparer;
