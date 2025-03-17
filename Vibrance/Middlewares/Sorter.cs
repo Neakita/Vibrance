@@ -116,10 +116,8 @@ internal sealed class Sorter<T> : IndexedChangesMiddleware<T, T>, InnerListProvi
 			var itemsList = sortedItems.Select(tuple => tuple.item).ToList();
 			_sorted.InsertRange(sortedIndex + offset, itemsList);
 			for (var i = 0; i < sortedItems.Count; i++)
-			{
 				lookup[sortedItems[i].sourceLocalIndex] = sortedIndex + i + offset;
-				ShiftIndexesLookup(sortedIndex + i + offset, 1);
-			}
+			ShiftIndexesLookup(sortedIndex + offset, sortedItems.Count);
 			result.Add(Range.FromCount(sortedIndex + offset, sortedItems.Count));
 			offset += sortedItems.Count;
 		}
