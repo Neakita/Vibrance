@@ -42,19 +42,6 @@ internal sealed class Sorter<T> : IndexedChangesMiddleware<T, T>, InnerListProvi
 		}
 	}
 
-	private bool TryNotifySingleChange(IndexedChange<T> change, IReadOnlyList<IndexedItems<T>> removals, IReadOnlyList<Range> insertionRanges)
-	{
-		if (removals.Count > 1 || insertionRanges.Count > 1)
-			return false;
-		var singleRemoval = removals.SingleOrDefault(IndexedItems<T>.Empty);
-		var singleInsertion = insertionRanges is [var singleInsertionRange]
-			? new IndexedItems<T>(singleInsertionRange.Start, _sorted.GetRange(singleInsertionRange))
-			: IndexedItems<T>.Empty;
-		var sortedChange = change.Factory.CreateChange(singleRemoval, singleInsertion);
-		DestinationObserver.OnNext(sortedChange);
-		return true;
-	}
-
 	private readonly IComparer<T> _comparer;
 	private readonly List<int> _sourceToSortedIndexLookup = new();
 	private readonly List<T> _sorted = new();
@@ -146,5 +133,18 @@ internal sealed class Sorter<T> : IndexedChangesMiddleware<T, T>, InnerListProvi
 		if (index < 0)
 			index = ~index;
 		return index;
+	}
+
+	private bool TryNotifySingleChange(IndexedChange<T> change, IReadOnlyList<IndexedItems<T>> removals, IReadOnlyList<Range> insertionRanges)
+	{
+		if (removals.Count > 1 || insertionRanges.Count > 1)
+			return false;
+		var singleRemoval = removals.SingleOrDefault(IndexedItems<T>.Empty);
+		var singleInsertion = insertionRanges is [var singleInsertionRange]
+			? new IndexedItems<T>(singleInsertionRange.Start, _sorted.GetRange(singleInsertionRange))
+			: IndexedItems<T>.Empty;
+		var sortedChange = change.Factory.CreateChange(singleRemoval, singleInsertion);
+		DestinationObserver.OnNext(sortedChange);
+		return true;
 	}
 }
