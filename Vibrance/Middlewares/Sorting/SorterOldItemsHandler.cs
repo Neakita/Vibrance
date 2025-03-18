@@ -3,7 +3,7 @@ using Vibrance.Changes;
 using Vibrance.Utilities;
 using Range = Vibrance.Utilities.Range;
 
-namespace Vibrance.Middlewares;
+namespace Vibrance.Middlewares.Sorting;
 
 internal sealed class SorterOldItemsHandler<T>
 {

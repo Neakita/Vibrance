@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Vibrance.Changes;
 using Vibrance.Middlewares;
+using Vibrance.Middlewares.Sorting;
 using Vibrance.Tests.Utilities;
 
 namespace Vibrance.Tests;

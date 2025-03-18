@@ -1,6 +1,6 @@
 using Vibrance.Changes;
 
-namespace Vibrance.Middlewares;
+namespace Vibrance.Middlewares.Sorting;
 
 internal sealed class Sorter<T> : IndexedChangesMiddleware<T, T>, InnerListProvider<T>
 {
