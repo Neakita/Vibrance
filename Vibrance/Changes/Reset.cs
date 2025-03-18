@@ -19,6 +19,25 @@ public sealed class Reset<T> : IndexedChange<T>
 
 	public IReadOnlyList<T> NewItems { get; init; } = ReadOnlyCollection<T>.Empty;
 
+	public IndexedChange<T> AsRemovalOrReplacement
+	{
+		get
+		{
+			if (NewItems.Count == 0)
+				return new IndexedRemoval<T>
+				{
+					Index = 0,
+					Items = OldItems
+				};
+			return new IndexedReplacement<T>
+			{
+				Index = 0,
+				OldItems = OldItems,
+				NewItems = NewItems
+			};
+		}
+	}
+
 	int IndexedChange<T>.OldIndex => 0;
 	int IndexedChange<T>.NewIndex => 0;
 

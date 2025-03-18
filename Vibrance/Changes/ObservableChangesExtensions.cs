@@ -52,4 +52,11 @@ public static class ObservableChangesExtensions
 			DestinationObserver = observer,
 			SourceObservable = source
 		});
+
+	public static IObservable<IndexedChange<T>> Concatenate<T>(
+		this IObservable<IndexedChange<T>> firstSource,
+		IObservable<IndexedChange<T>> secondSource)
+	{
+		return Observable.Create<IndexedChange<T>>(observer => new Concat<T>(firstSource, secondSource, observer));
+	}
 }
