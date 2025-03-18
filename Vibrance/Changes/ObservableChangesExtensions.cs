@@ -59,4 +59,11 @@ public static class ObservableChangesExtensions
 	{
 		return Observable.Create<IndexedChange<T>>(observer => new Concat<T>(firstSource, secondSource, observer));
 	}
+
+	public static IObservable<IndexedChange<T>> DisposeMany<T>(this IObservable<IndexedChange<T>> source) =>
+		Observable.Create<IndexedChange<T>>(observer => new DisposeMany<T>
+		{
+			DestinationObserver = observer,
+			SourceObservable = source
+		});
 }
