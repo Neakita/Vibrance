@@ -19,24 +19,28 @@ internal sealed class Sorter<T> : IndexedChangesMiddleware<T, T>, InnerListProvi
 	protected override void HandleChange(IndexedChange<T> change)
 	{
 		var removals = HandleOldItems(change.OldItemsAsIndexed());
-		var insertionRanges = HandleNewItems(change.NewItemsAsIndexed());
+		var insertions = HandleNewItems(change.NewItemsAsIndexed());
 		if (change is Move<T>)
 			return;
-		if (TryNotifySingleChange(change, removals, insertionRanges))
+		var insertionsList = insertions.ToList();
+		if (TryNotifySingleChange(change, removals, insertionsList))
 			return;
-		foreach (var removal in removals)
-			DestinationObserver.OnNext(new IndexedRemoval<T>
-			{
-				Index = removal.Index,
-				Items = removal.List
-			});
-		foreach (var range in insertionRanges)
+		foreach (var items in removals)
 		{
-			var items = _sorted.GetRange(range);
+			IndexedRemoval<T> removal = new()
+			{
+				Index = items.Index,
+				Items = items.List
+			};
+			DestinationObserver.OnNext(removal);
+		}
+
+		foreach (var items in insertionsList)
+		{
 			Insertion<T> insertion = new()
 			{
-				Index = range.Start,
-				Items = items
+				Index = items.Index,
+				Items = items.List
 			};
 			DestinationObserver.OnNext(insertion);
 		}
@@ -94,35 +98,106 @@ internal sealed class Sorter<T> : IndexedChangesMiddleware<T, T>, InnerListProvi
 				_sourceToSortedIndexLookup[i] += delta;
 	}
 
-	private IReadOnlyList<Range> HandleNewItems(IndexedItems<T> items)
+	private IEnumerable<IndexedItems<T>> HandleNewItems(IndexedItems<T> items)
 	{
 		if (items.IsEmpty)
-			return ReadOnlyCollection<Range>.Empty;
-		return InsertItemsInOrder(items);
+			return Enumerable.Empty<IndexedItems<T>>();
+		List<InsertionGroup> insertionGroups = CreateInsertionGroups(items);
+		UpdateLookup(items, insertionGroups);
+		InsertItems(insertionGroups);
+		return insertionGroups.Select(group =>
+			new IndexedItems<T>(group.SortedIndex, _sorted.GetRange(group.SortedIndex, group.Items.Count)));
 	}
 
-	private List<Range> InsertItemsInOrder(IndexedItems<T> sourceItems)
+	private sealed class IndexedItem
 	{
-		List<(int sortedIndex, List<(T item, int sourceLocalIndex)> items)> sortedGroups = sourceItems.List
-			.Select((item, sourceIndex) => (item, sourceIndex))
-			.GroupBy(tuple => FindIndexToInsert(tuple.item), (sortedIndex, items) => (sortedIndex, items: items.OrderBy(tuple => tuple.item, _comparer).ToList()))
-			.OrderBy(tuple => tuple.sortedIndex)
+		public int Index { get; }
+		public T Item { get; }
+
+		public IndexedItem(int index, T item)
+		{
+			Index = index;
+			Item = item;
+		}
+	}
+
+	private sealed class InsertionGroup
+	{
+		public int SortedIndex { get; set; }
+		public List<IndexedItem> Items { get; }
+
+		public InsertionGroup(int sortedIndex, List<IndexedItem> items)
+		{
+			SortedIndex = sortedIndex;
+			Items = items;
+		}
+	}
+
+	private void InsertItems(List<InsertionGroup> insertionGroups)
+	{
+		foreach (var group in insertionGroups)
+		{
+			var sortedIndex = group.SortedIndex;
+			var sortedItems = group.Items;
+			var itemsList = sortedItems.Select(tuple => tuple.Item).ToList();
+			_sorted.InsertRange(sortedIndex, itemsList);
+		}
+	}
+
+	private List<InsertionGroup> CreateInsertionGroups(IndexedItems<T> sourceItems)
+	{
+		List<InsertionGroup> insertionGroups = sourceItems.List
+			.Select(CreateIndexedItem)
+			.GroupBy(item => FindIndexToInsert(item.Item), CreateInsertionGroup)
+			.OrderBy(group => group.SortedIndex)
 			.ToList();
 		int offset = 0;
-		int[] lookup = new int[sourceItems.Count];
-		List<Range> result = new(sortedGroups.Count);
-		foreach (var (sortedIndex, sortedItems) in sortedGroups)
+		foreach (var group in insertionGroups)
 		{
-			var itemsList = sortedItems.Select(tuple => tuple.item).ToList();
-			_sorted.InsertRange(sortedIndex + offset, itemsList);
-			for (var i = 0; i < sortedItems.Count; i++)
-				lookup[sortedItems[i].sourceLocalIndex] = sortedIndex + i + offset;
-			ShiftIndexesLookup(sortedIndex + offset, sortedItems.Count);
-			result.Add(Range.FromCount(sortedIndex + offset, sortedItems.Count));
-			offset += sortedItems.Count;
+			group.SortedIndex += offset;
+			offset += group.Items.Count;
 		}
-		_sourceToSortedIndexLookup.InsertRange(sourceItems.Index, lookup);
-		return result;
+		return insertionGroups;
+	}
+
+	private void UpdateLookup(IndexedItems<T> sourceItems, List<InsertionGroup> insertionGroups)
+	{
+		ShiftIndexesLookupForInsertions(insertionGroups);
+		var insertion = CreateLookupInsertion(sourceItems.Count, insertionGroups);
+		_sourceToSortedIndexLookup.InsertRange(sourceItems.Index, insertion);
+	}
+
+	private void ShiftIndexesLookupForInsertions(List<InsertionGroup> insertionGroups)
+	{
+		foreach (var group in insertionGroups)
+		{
+			var sortedIndex = group.SortedIndex;
+			var sortedItems = group.Items;
+			ShiftIndexesLookup(sortedIndex, sortedItems.Count);
+		}
+	}
+
+	private static int[] CreateLookupInsertion(int itemsCount, List<InsertionGroup> insertionGroups)
+	{
+		int[] insertion = new int[itemsCount];
+		foreach (var group in insertionGroups)
+		{
+			var sortedItems = group.Items;
+			var sortedIndex = group.SortedIndex;
+			for (var i = 0; i < sortedItems.Count; i++)
+				insertion[sortedItems[i].Index] = sortedIndex + i;
+		}
+		return insertion;
+	}
+
+	private static IndexedItem CreateIndexedItem(T item, int sourceIndex)
+	{
+		return new IndexedItem(sourceIndex, item);
+	}
+
+	private InsertionGroup CreateInsertionGroup(int sortedIndex, IEnumerable<IndexedItem> items)
+	{
+		return new InsertionGroup(sortedIndex, items.OrderBy(item => item.Item, _comparer).ToList());
 	}
 
 	private int FindIndexToInsert(T item)
@@ -133,14 +208,12 @@ internal sealed class Sorter<T> : IndexedChangesMiddleware<T, T>, InnerListProvi
 		return index;
 	}
 
-	private bool TryNotifySingleChange(IndexedChange<T> change, IReadOnlyList<IndexedItems<T>> removals, IReadOnlyList<Range> insertionRanges)
+	private bool TryNotifySingleChange(IndexedChange<T> change, IReadOnlyList<IndexedItems<T>> removals, IReadOnlyList<IndexedItems<T>> insertions)
 	{
-		if (removals.Count > 1 || insertionRanges.Count > 1)
+		if (removals.Count > 1 || insertions.Count > 1)
 			return false;
 		var singleRemoval = removals.SingleOrDefault(IndexedItems<T>.Empty);
-		var singleInsertion = insertionRanges is [var singleInsertionRange]
-			? new IndexedItems<T>(singleInsertionRange.Start, _sorted.GetRange(singleInsertionRange))
-			: IndexedItems<T>.Empty;
+		var singleInsertion = insertions.SingleOrDefault(IndexedItems<T>.Empty);
 		var sortedChange = change.Factory.CreateChange(singleRemoval, singleInsertion);
 		DestinationObserver.OnNext(sortedChange);
 		return true;
