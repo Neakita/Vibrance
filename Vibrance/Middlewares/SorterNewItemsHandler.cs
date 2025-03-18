@@ -42,30 +42,18 @@ internal sealed class SorterNewItemsHandler<T>
 		List<InsertionGroup> insertionGroups = CreateInsertionGroups(items);
 		UpdateLookup(items, insertionGroups);
 		InsertItems(insertionGroups);
-		return insertionGroups.Select(group =>
-			new IndexedItems<T>(group.SortedIndex, _sortedItems.GetRange(group.SortedIndex, group.Items.Count)));
+		return insertionGroups.Select(GroupToItems);
 	}
 
 	private readonly List<int> _sourceToSortedIndexLookup;
 	private readonly List<T> _sortedItems;
 	private readonly IComparer<T> _comparer;
 
-	private void InsertItems(List<InsertionGroup> insertionGroups)
-	{
-		foreach (var group in insertionGroups)
-		{
-			var sortedIndex = group.SortedIndex;
-			var sortedItems = group.Items;
-			var itemsList = sortedItems.Select(tuple => tuple.Item).ToList();
-			_sortedItems.InsertRange(sortedIndex, itemsList);
-		}
-	}
-
 	private List<InsertionGroup> CreateInsertionGroups(IndexedItems<T> sourceItems)
 	{
 		List<InsertionGroup> insertionGroups = sourceItems.List
 			.Select(CreateIndexedItem)
-			.GroupBy(item => FindIndexToInsert(item.Item), CreateInsertionGroup)
+			.GroupBy(item => FindInsertionIndex(item.Item), CreateInsertionGroup)
 			.OrderBy(group => group.SortedIndex)
 			.ToList();
 		int offset = 0;
@@ -99,10 +87,9 @@ internal sealed class SorterNewItemsHandler<T>
 		int[] insertion = new int[itemsCount];
 		foreach (var group in insertionGroups)
 		{
-			var sortedItems = group.Items;
-			var sortedIndex = group.SortedIndex;
-			for (var i = 0; i < sortedItems.Count; i++)
-				insertion[sortedItems[i].Index] = sortedIndex + i;
+			var items = group.Items;
+			for (var i = 0; i < items.Count; i++)
+				insertion[items[i].Index] = group.SortedIndex + i;
 		}
 		return insertion;
 	}
@@ -117,7 +104,7 @@ internal sealed class SorterNewItemsHandler<T>
 		return new InsertionGroup(sortedIndex, items.OrderBy(item => item.Item, _comparer).ToList());
 	}
 
-	private int FindIndexToInsert(T item)
+	private int FindInsertionIndex(T item)
 	{
 		var index = _sortedItems.BinarySearch(item, _comparer);
 		if (index < 0)
@@ -132,5 +119,22 @@ internal sealed class SorterNewItemsHandler<T>
 		for (var i = 0; i < _sourceToSortedIndexLookup.Count; i++)
 			if (_sourceToSortedIndexLookup[i] >= startSortedIndex)
 				_sourceToSortedIndexLookup[i] += delta;
+	}
+
+	private void InsertItems(List<InsertionGroup> insertionGroups)
+	{
+		foreach (var group in insertionGroups)
+		{
+			var sortedIndex = group.SortedIndex;
+			var sortedItems = group.Items;
+			var itemsList = sortedItems.Select(tuple => tuple.Item).ToList();
+			_sortedItems.InsertRange(sortedIndex, itemsList);
+		}
+	}
+
+	private IndexedItems<T> GroupToItems(InsertionGroup group)
+	{
+		var items = _sortedItems.GetRange(group.SortedIndex, group.Items.Count);
+		return new IndexedItems<T>(group.SortedIndex, items);
 	}
 }
