@@ -17,32 +17,17 @@ internal sealed class Sorter<T> : IndexedChangesMiddleware<T, T>, InnerListProvi
 
 	protected override void HandleChange(IndexedChange<T> change)
 	{
-		var removals = _oldItemsHandler.HandleOldItems(change.OldItemsAsIndexed());
-		var insertions = _newItemsHandler.HandleNewItems(change.NewItemsAsIndexed());
+		var removedItems = _oldItemsHandler.HandleOldItems(change.OldItemsAsIndexed());
+		var addedItems = _newItemsHandler.HandleNewItems(change.NewItemsAsIndexed());
 		if (change is Move<T>)
 			return;
-		var insertionsList = insertions.ToList();
-		if (TryNotifySingleChange(change, removals, insertionsList))
+		var addedItemsList = addedItems.ToList();
+		if (TryNotifySingleChange(change, removedItems, addedItemsList))
 			return;
-		foreach (var items in removals)
-		{
-			IndexedRemoval<T> removal = new()
-			{
-				Index = items.Index,
-				Items = items.List
-			};
+		foreach (var removal in removedItems.Select(ItemsToRemoval))
 			DestinationObserver.OnNext(removal);
-		}
-
-		foreach (var items in insertionsList)
-		{
-			Insertion<T> insertion = new()
-			{
-				Index = items.Index,
-				Items = items.List
-			};
+		foreach (var insertion in addedItemsList.Select(ItemsToInsertion))
 			DestinationObserver.OnNext(insertion);
-		}
 	}
 
 	private readonly List<int> _sourceToSortedIndexLookup = new();
@@ -59,5 +44,23 @@ internal sealed class Sorter<T> : IndexedChangesMiddleware<T, T>, InnerListProvi
 		var sortedChange = change.Factory.CreateChange(singleRemoval, singleInsertion);
 		DestinationObserver.OnNext(sortedChange);
 		return true;
+	}
+
+	private static IndexedRemoval<T> ItemsToRemoval(IndexedItems<T> items)
+	{
+		return new IndexedRemoval<T>
+		{
+			Index = items.Index,
+			Items = items.List
+		};
+	}
+
+	private static Insertion<T> ItemsToInsertion(IndexedItems<T> items)
+	{
+		return new Insertion<T>
+		{
+			Index = items.Index,
+			Items = items.List
+		};
 	}
 }
