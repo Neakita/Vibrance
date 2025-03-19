@@ -197,6 +197,8 @@ public sealed class SourceList<T> : IList<T>, ReadOnlySourceList<T>, InnerListPr
 
 	public void Dispose()
 	{
+		foreach (var observer in _observers)
+			observer.OnCompleted();
 		_observers.Clear();
 	}
 
