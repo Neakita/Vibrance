@@ -66,4 +66,21 @@ public static class ObservableChangesExtensions
 			DestinationObserver = observer,
 			SourceObservable = source
 		});
+
+	public static ReadOnlySourceList<T> ToSourceList<T>(this IObservable<IndexedChange<T>> source)
+	{
+		if (source is InnerListProvider<T> innerListProvider)
+			return new ExistingSourceListAdapter<T>(innerListProvider.Inner, source);
+		PostponedConfigurableObserver<IndexedChange<T>> configurableObserver = new();
+		var subscription = source.Subscribe(configurableObserver);
+		if (subscription is InnerListProvider<T> subscriptionAsInnerListProvider)
+		{
+			ExistingSourceListAdapter<T> existingSourceListAdapter = new(subscriptionAsInnerListProvider.Inner, subscription);
+			configurableObserver.Observer = new ActionObserver<IndexedChange<T>>(change => existingSourceListAdapter.NotifyObservers(change));
+			return existingSourceListAdapter;
+		}
+		ChangesSourceListAdapter<T> changesSourceListAdapter = new(subscription);
+		configurableObserver.Observer = new ActionObserver<IndexedChange<T>>(change => changesSourceListAdapter.ApplyChange(change));
+		return changesSourceListAdapter;
+	}
 }
