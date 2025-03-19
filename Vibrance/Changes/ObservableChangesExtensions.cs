@@ -15,13 +15,9 @@ public static class ObservableChangesExtensions
 			SourceObservable = source
 		});
 
-	public static IDisposable ToObservableList<T>(
-		this IObservable<IndexedChange<T>> source,
-		out ReadOnlyObservableList<T> list)
+	public static ReadOnlyObservableList<T> ToObservableList<T>(this IObservable<IndexedChange<T>> source)
 	{
-		ObservableList<T> observableList = new();
-		list = observableList;
-		return source.Subscribe(observableList.HandleChange);
+		return new ChangeableObservableList<T>(source);
 	}
 
 	public static IObservable<IndexedChange<T>> Sort<T>(this IObservable<IndexedChange<T>> source, IComparer<T>? comparer = null) =>
@@ -51,9 +47,4 @@ public static class ObservableChangesExtensions
 			DestinationObserver = observer,
 			SourceObservable = source
 		});
-
-	public static ReadOnlySourceList<T> ToSourceList<T>(this IObservable<IndexedChange<T>> source)
-	{
-		return new ChangesSourceListAdapter<T>(source);
-	}
 }

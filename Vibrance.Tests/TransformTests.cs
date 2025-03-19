@@ -10,7 +10,7 @@ public sealed class TransformTests
 	[Fact]
 	public void ShouldObserveInitialItems()
 	{
-		SourceList<int> source = [1, 2, 3];
+		ObservableList<int> source = [1, 2, 3];
 		using var observer = source.Transform(number => number.ToString()).ObserveChanges();
 		observer.LastObservedValue.NewItems.Should().ContainInOrder("1", "2", "3");
 		VerifyDataIntegrity(source, NumberToString, observer);
@@ -19,7 +19,7 @@ public sealed class TransformTests
 	[Fact]
 	public void ShouldObserveReset()
 	{
-		SourceList<int> source = [1, 2, 3];
+		ObservableList<int> source = [1, 2, 3];
 		using var observer = source.Transform(number => number.ToString()).ObserveChanges();
 		source.ReplaceAll(4, 5, 6);
 		observer.LastObservedValue.Should().BeOfType<Reset<string>>();
@@ -30,7 +30,7 @@ public sealed class TransformTests
 	[Fact]
 	public void ShouldObserveOldItems()
 	{
-		SourceList<int> source = [1, 2, 3];
+		ObservableList<int> source = [1, 2, 3];
 		using var observer = source.Transform(number => number.ToString()).ObserveChanges();
 		source.RemoveRange(0, 2);
 		observer.LastObservedValue.OldItems.Should().ContainInOrder("1", "2");
@@ -40,7 +40,7 @@ public sealed class TransformTests
 	[Fact]
 	public void ShouldObserveNewItems()
 	{
-		SourceList<int> source = [1, 2, 3];
+		ObservableList<int> source = [1, 2, 3];
 		using var observer = source.Transform(number => number.ToString()).ObserveChanges();
 		source.InsertRange(1, 4, 5, 6);
 		observer.LastObservedValue.NewItems.Should().ContainInOrder("4", "5", "6");
@@ -51,7 +51,7 @@ public sealed class TransformTests
 	[Fact]
 	public void ShouldObserveMove()
 	{
-		SourceList<int> source = [1, 2, 3];
+		ObservableList<int> source = [1, 2, 3];
 		using var observer = source.Transform(NumberToString).ObserveChanges();
 		source.MoveRange(0, 2, 1);
 		var observation = observer.LastObservedValue;

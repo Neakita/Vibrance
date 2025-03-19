@@ -19,10 +19,10 @@ public class TransformBenchmark
 	public void VibranceSetup()
 	{
 		_vibranceSubscription?.Dispose();
-		_vibranceSourceList = new SourceList<int>();
+		_vibranceSourceList = new ObservableList<int>();
 		_vibranceSubscription = _vibranceSourceList
 			.Transform(number => number.ToString())
-			.ToObservableList(out _);
+			.ToObservableList();
 	}
 
 	[Benchmark]
@@ -36,7 +36,7 @@ public class TransformBenchmark
 	{
 		_dynamicDataSubscription?.Dispose();
 		_dynamicDataSourceList?.Dispose();
-		_dynamicDataSourceList = new DynamicData.SourceList<int>();
+		_dynamicDataSourceList = new SourceList<int>();
 		_dynamicDataSubscription = _dynamicDataSourceList
 			.Connect()
 			.Transform(number => number.ToString())
@@ -51,8 +51,8 @@ public class TransformBenchmark
 	}
 
 	private List<int>? _itemsToAdd;
-	private SourceList<int>? _vibranceSourceList;
+	private ObservableList<int>? _vibranceSourceList;
 	private IDisposable? _vibranceSubscription;
-	private DynamicData.SourceList<int>? _dynamicDataSourceList;
+	private SourceList<int>? _dynamicDataSourceList;
 	private IDisposable? _dynamicDataSubscription;
 }

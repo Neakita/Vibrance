@@ -10,7 +10,7 @@ public sealed class SortTests
 	[Fact]
 	public void ShouldObserveInitiallySortedItems()
 	{
-		SourceList<int> list = [1, 2, 3];
+		ObservableList<int> list = [1, 2, 3];
 		using var observer = list.Sort().ObserveChanges();
 		observer.LastObservedValue.NewItems.Should().ContainInOrder(1, 2, 3);
 		CheckDataIntegrity(observer, list);
@@ -19,7 +19,7 @@ public sealed class SortTests
 	[Fact]
 	public void ShouldObserveInOrderInitiallyUnOrderedItems()
 	{
-		SourceList<int> list = [2, 3, 1];
+		ObservableList<int> list = [2, 3, 1];
 		using var observer = list.Sort().ObserveChanges();
 		observer.LastObservedValue.NewItems.Should().ContainInOrder(1, 2, 3);
 		CheckDataIntegrity(observer, list);
@@ -28,7 +28,7 @@ public sealed class SortTests
 	[Fact]
 	public void ShouldObserveNewItemInProperIndex()
 	{
-		SourceList<int> list = [1, 2, 4];
+		ObservableList<int> list = [1, 2, 4];
 		using var observer = list.Sort().ObserveChanges();
 		list.Add(3);
 		observer.LastObservedValue.NewIndex.Should().Be(2);
@@ -38,7 +38,7 @@ public sealed class SortTests
 	[Fact]
 	public void ShouldRemoveItem()
 	{
-		SourceList<int> list = [1, 2, 3];
+		ObservableList<int> list = [1, 2, 3];
 		using var observer = list.Sort().ObserveChanges();
 		list.Remove(2);
 		observer.LastObservedValue.OldItems.Should().Contain(2);
@@ -49,7 +49,7 @@ public sealed class SortTests
 	[Fact]
 	public void ShouldRemoveItems()
 	{
-		SourceList<int> list = [1, 2, 3, 4, 5];
+		ObservableList<int> list = [1, 2, 3, 4, 5];
 		using var observer = list.Sort().ObserveChanges();
 		list.RemoveRange(1, 2);
 		observer.LastObservedValue.OldItems.Should().Contain([2, 3]);
@@ -60,7 +60,7 @@ public sealed class SortTests
 	[Fact]
 	public void ShouldRemoveItemWhenUnordered()
 	{
-		SourceList<int> list = [5, 1, 2, 4, 3];
+		ObservableList<int> list = [5, 1, 2, 4, 3];
 		using var observer = list.Sort().ObserveChanges();
 		list.RemoveRange(1, 2);
 		observer.LastObservedValue.OldItems.Should().ContainInOrder(1, 2);
@@ -71,7 +71,7 @@ public sealed class SortTests
 	[Fact]
 	public void ShouldNotObserveMove()
 	{
-		SourceList<int> list = [1, 2, 3];
+		ObservableList<int> list = [1, 2, 3];
 		using var observer = list.Sort().ObserveChanges();
 		var initialChange = observer.LastObservedValue;
 		list.Move(0, 2);
@@ -82,7 +82,7 @@ public sealed class SortTests
 	[Fact]
 	public void ShouldNotObserveMoveRange()
 	{
-		SourceList<int> list = [1, 2, 3, 4, 5];
+		ObservableList<int> list = [1, 2, 3, 4, 5];
 		using var observer = list.Sort().ObserveChanges();
 		var initialChange = observer.LastObservedValue;
 		list.MoveRange(0, 2, 3);
@@ -93,7 +93,7 @@ public sealed class SortTests
 	[Fact]
 	public void ShouldAddUnorderedItems()
 	{
-		SourceList<int> list = [1, 2, 3];
+		ObservableList<int> list = [1, 2, 3];
 		using var observer = list.Sort().ObserveChanges();
 		list.AddRange(6, 4, 5);
 		observer.LastObservedValue.NewItems.Should().ContainInOrder(4, 5, 6);
@@ -103,7 +103,7 @@ public sealed class SortTests
 	[Fact]
 	public void ShouldObserveReset()
 	{
-		SourceList<int> list = [5, 1, 2, 4, 3];
+		ObservableList<int> list = [5, 1, 2, 4, 3];
 		using var observer = list.Sort().ObserveChanges();
 		list.ReplaceAll(2, 1, 3);
 		observer.LastObservedValue.OldItems.Should().ContainInOrder(1, 2, 3, 4, 5);
@@ -115,7 +115,7 @@ public sealed class SortTests
 	[Fact]
 	public void ShouldInsertUnorderedItems()
 	{
-		SourceList<int> list = [1, 3, 6];
+		ObservableList<int> list = [1, 3, 6];
 		using var observer = list.Sort().ObserveChanges();
 		list.AddRange(5, 2, 4);
 		CheckDataIntegrity(observer, list);
@@ -124,7 +124,7 @@ public sealed class SortTests
 	[Fact]
 	public void ShouldAddDuplicate()
 	{
-		SourceList<int> list = [1, 2, 3];
+		ObservableList<int> list = [1, 2, 3];
 		using var observer = list.Sort().ObserveChanges();
 		list.Add(1);
 		CheckDataIntegrity(observer, list);

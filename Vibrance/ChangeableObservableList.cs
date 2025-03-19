@@ -1,18 +1,23 @@
 using System.Collections;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using Vibrance.Changes;
 using Vibrance.Utilities;
 
 namespace Vibrance;
 
-internal sealed class ChangesSourceListAdapter<T> : ReadOnlySourceList<T>
+internal sealed class ChangeableObservableList<T> : ReadOnlyObservableList<T>
 {
+	public event NotifyCollectionChangedEventHandler? CollectionChanged;
+	public event PropertyChangedEventHandler? PropertyChanged;
+
 	public int Count => _items.Count;
 
 	public T this[int index] => _items[index];
 
-	public ChangesSourceListAdapter(IObservable<IndexedChange<T>> changes)
+	public ChangeableObservableList(IObservable<IndexedChange<T>> changes)
 	{
-		_subscription = changes.Subscribe(ApplyChange);
+		_subscription = changes.Subscribe(HandleChange);
 	}
 
 	public IDisposable Subscribe(IObserver<IndexedChange<T>> observer)
@@ -52,15 +57,41 @@ internal sealed class ChangesSourceListAdapter<T> : ReadOnlySourceList<T>
 	private readonly IDisposable _subscription;
 	private readonly List<IObserver<IndexedChange<T>>> _observers = new();
 
-	private void ApplyChange(IndexedChange<T> change)
+	private void HandleChange(IndexedChange<T> change)
 	{
 		change.ApplyToList(_items);
+		Notify(change);
+	}
+
+	private void Notify(IndexedChange<T> change)
+	{
 		NotifyObservers(change);
+		NotifyCollectionChanged(change);
+		NotifyCountChanged();
+		NotifyIndexerChanged();
 	}
 
 	private void NotifyObservers(IndexedChange<T> change)
 	{
 		foreach (var observer in _observers)
 			observer.OnNext(change);
+	}
+
+	private void NotifyCollectionChanged(IndexedChange<T> change)
+	{
+		if (CollectionChanged == null)
+			return;
+		var args = change.ToNotifyCollectionChangedEventArgs();
+		CollectionChanged.Invoke(this, args);
+	}
+
+	private void NotifyCountChanged()
+	{
+		PropertyChanged?.Invoke(this, KnownPropertyChangedEventArgs.CountChangedEventArgs);
+	}
+
+	private void NotifyIndexerChanged()
+	{
+		PropertyChanged?.Invoke(this, KnownPropertyChangedEventArgs.IndexerChangedEventArgs);
 	}
 }

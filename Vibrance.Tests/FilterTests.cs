@@ -10,7 +10,7 @@ public sealed class FilterTests
 	[Fact]
 	public void ShouldObserveAllInitialItems()
 	{
-		SourceList<int> source = [1, 2, 3];
+		ObservableList<int> source = [1, 2, 3];
 		using var observer = source.Filter(Any).ObserveChanges();
 		observer.LastObservedValue.NewItems.Should().Contain([1, 2, 3]);
 		observer.LastObservedValue.NewIndex.Should().Be(0);
@@ -20,7 +20,7 @@ public sealed class FilterTests
 	[Fact]
 	public void ShouldObserveFilteredInitialItems()
 	{
-		SourceList<int> source = [1, 2, 3, 4];
+		ObservableList<int> source = [1, 2, 3, 4];
 		using var observer = source.Filter(IsEven).ObserveChanges();
 		observer.LastObservedValue.NewItems.Should().Contain([2, 4]);
 		observer.LastObservedValue.NewIndex.Should().Be(0);
@@ -30,7 +30,7 @@ public sealed class FilterTests
 	[Fact]
 	public void ShouldObserveNewFilteredItems()
 	{
-		SourceList<int> source = [1, 2, 3, 4];
+		ObservableList<int> source = [1, 2, 3, 4];
 		using var observer = source.Filter(IsEven).ObserveChanges();
 		source.InsertRange(2, [5, 6, 7, 8]);
 		observer.LastObservedValue.NewItems.Should().Contain([6, 8]);
@@ -41,7 +41,7 @@ public sealed class FilterTests
 	[Fact]
 	public void ShouldObserveRangeRemove()
 	{
-		SourceList<int> source = [1, 2, 3, 4, 5];
+		ObservableList<int> source = [1, 2, 3, 4, 5];
 		using var observer = source.Filter(Any).ObserveChanges();
 		source.RemoveRange(1, 2);
 		observer.LastObservedValue.OldItems.Should().Contain([2, 3]);
@@ -52,7 +52,7 @@ public sealed class FilterTests
 	[Fact]
 	public void ShouldObserveFilteredRangeRemove()
 	{
-		SourceList<int> source = [1, 2, 3, 4, 5, 6];
+		ObservableList<int> source = [1, 2, 3, 4, 5, 6];
 		using var observer = source.Filter(IsEven).ObserveChanges();
 		source.RemoveRange(1, 3);
 		observer.LastObservedValue.OldItems.Should().Contain([2, 4]);
@@ -63,7 +63,7 @@ public sealed class FilterTests
 	[Fact]
 	public void ShouldNotObserveFilteredItemMove()
 	{
-		SourceList<int> source = [1, 2, 3, 4];
+		ObservableList<int> source = [1, 2, 3, 4];
 		using var observer = source.Filter(IsEven).ObserveChanges();
 		var initialChange = observer.LastObservedValue;
 		source.Move(0, 1);
@@ -74,7 +74,7 @@ public sealed class FilterTests
 	[Fact]
 	public void ShouldObserveReset()
 	{
-		SourceList<int> source = [1, 2, 3, 4];
+		ObservableList<int> source = [1, 2, 3, 4];
 		using var observer = source.Filter(IsEven).ObserveChanges();
 		source.ReplaceAll(5, 6, 7, 8);
 		observer.LastObservedValue.Should().BeOfType<Reset<int>>();
@@ -85,7 +85,7 @@ public sealed class FilterTests
 	[Fact]
 	public void ShouldNotObserveMoveWhenNotEffectivelyMoved()
 	{
-		SourceList<int> source = [1, 2, 3, 4];
+		ObservableList<int> source = [1, 2, 3, 4];
 		using var observer = source.Filter(IsEven).ObserveChanges();
 		var initialChange = observer.LastObservedValue;
 		source.MoveRange(0, 2, 1);
@@ -96,7 +96,7 @@ public sealed class FilterTests
 	[Fact]
 	public void ShouldObserveMove()
 	{
-		SourceList<int> source = [1, 2, 3, 4];
+		ObservableList<int> source = [1, 2, 3, 4];
 		using var observer = source.Filter(IsEven).ObserveChanges();
 		source.MoveRange(0, 2, 2);
 		observer.LastObservedValue.OldIndex.Should().Be(0);
