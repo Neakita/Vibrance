@@ -6,7 +6,7 @@ using Vibrance.Utilities;
 
 namespace Vibrance;
 
-internal sealed class ObservableList<T> : ReadOnlyObservableList<T>, IndexedChangesHandler<T>
+internal sealed class ObservableList<T> : ReadOnlyObservableList<T>
 {
 	public event NotifyCollectionChangedEventHandler? CollectionChanged;
 	public event PropertyChangedEventHandler? PropertyChanged;

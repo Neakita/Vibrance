@@ -4,17 +4,15 @@ using Vibrance.Utilities;
 
 namespace Vibrance;
 
-internal sealed class ChangesSourceListAdapter<T> : ReadOnlySourceList<T>, InnerListProvider<T>, IDisposable
+internal sealed class ChangesSourceListAdapter<T> : ReadOnlySourceList<T>
 {
 	public int Count => _items.Count;
 
 	public T this[int index] => _items[index];
 
-	IReadOnlyList<T> InnerListProvider<T>.Inner => _items;
-
-	public ChangesSourceListAdapter(IDisposable disposable)
+	public ChangesSourceListAdapter(IObservable<IndexedChange<T>> changes)
 	{
-		_disposable = disposable;
+		_subscription = changes.Subscribe(ApplyChange);
 	}
 
 	public IDisposable Subscribe(IObserver<IndexedChange<T>> observer)
@@ -44,21 +42,21 @@ internal sealed class ChangesSourceListAdapter<T> : ReadOnlySourceList<T>, Inner
 
 	public void Dispose()
 	{
-		_disposable.Dispose();
+		_subscription.Dispose();
 		foreach (var observer in _observers)
 			observer.OnCompleted();
 		_observers.Clear();
 	}
 
-	internal void ApplyChange(IndexedChange<T> change)
+	private readonly List<T> _items = new();
+	private readonly IDisposable _subscription;
+	private readonly List<IObserver<IndexedChange<T>>> _observers = new();
+
+	private void ApplyChange(IndexedChange<T> change)
 	{
 		change.ApplyToList(_items);
 		NotifyObservers(change);
 	}
-
-	private readonly List<T> _items = new();
-	private readonly IDisposable _disposable;
-	private readonly List<IObserver<IndexedChange<T>>> _observers = new();
 
 	private void NotifyObservers(IndexedChange<T> change)
 	{

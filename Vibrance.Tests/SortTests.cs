@@ -133,7 +133,7 @@ public sealed class SortTests
 	private static void CheckDataIntegrity<T>(RecordingObserver<IndexedChange<T>> observer, IReadOnlyList<T> source)
 	{
 		var subscription = observer.Subscription;
-		var sorted = ((InnerListProvider<T>)subscription).Inner;
+		var sorted = ((Sorter<T>)subscription).SortedItems;
 		CheckInnerListIntegrity(source, sorted);
 		CheckLookupIntegrity(subscription, source);
 	}
@@ -146,7 +146,7 @@ public sealed class SortTests
 	private static void CheckLookupIntegrity<T>(IDisposable subscription, IReadOnlyList<T> source)
 	{
 		var sortSubscription = (Sorter<T>)subscription;
-		var sorted = ((InnerListProvider<T>)subscription).Inner;
+		var sorted = ((Sorter<T>)subscription).SortedItems;
 		var lookup = sortSubscription.SourceToSortedIndexLookup;
 		for (var i = 0; i < source.Count; i++)
 		{

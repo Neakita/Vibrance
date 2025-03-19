@@ -8,12 +8,8 @@ internal sealed class Concat<T> : IDisposable
 {
 	public Concat(IObservable<IndexedChange<T>> firstSource, IObservable<IndexedChange<T>> secondSource, IObserver<IndexedChange<T>> observer)
 	{
-		_firstSourceSubscription = firstSource.SubscribeAndGetInitialValue(
-			new ActionObserver<IndexedChange<T>>(HandleFirstSourceChange),
-			out var firstSourceInitialItems);
-		_secondSourceSubscription = secondSource.SubscribeAndGetInitialValue(
-			new ActionObserver<IndexedChange<T>>(HandleSecondSourceChange),
-			out var secondSourceInitialItems);
+		_firstSourceSubscription = firstSource.SubscribeAndGetInitialValue(HandleFirstSourceChange, out var firstSourceInitialItems);
+		_secondSourceSubscription = secondSource.SubscribeAndGetInitialValue(HandleSecondSourceChange, out var secondSourceInitialItems);
 		_observer = observer;
 		HandleInitialChanges(firstSourceInitialItems, secondSourceInitialItems);
 	}

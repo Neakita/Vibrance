@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Vibrance.Changes;
+using Vibrance.Middlewares;
 using Vibrance.Tests.Utilities;
 
 namespace Vibrance.Tests;
@@ -71,7 +72,7 @@ public sealed class TransformTests
 		Func<TSource, TDestination> selector,
 		RecordingObserver<IndexedChange<TDestination>> observer)
 	{
-		var transformed = ((InnerListProvider<TDestination>)observer.Subscription).Inner;
+		var transformed = ((Transformer<TSource, TDestination>)observer.Subscription).TransformedItems;
 		transformed.Should().ContainInOrder(source.Select(selector));
 	}
 }

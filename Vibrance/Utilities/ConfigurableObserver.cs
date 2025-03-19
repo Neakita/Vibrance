@@ -2,11 +2,11 @@ namespace Vibrance.Utilities;
 
 internal sealed class ConfigurableObserver<T> : IObserver<T>
 {
-	public required IObserver<T> Observer { get; set; }
+	public required Action<T> Action { get; set; }
 
 	public void OnNext(T value)
 	{
-		Observer.OnNext(value);
+		Action(value);
 	}
 
 	public void OnCompleted()

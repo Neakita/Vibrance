@@ -4,7 +4,7 @@ using Vibrance.Utilities;
 
 namespace Vibrance;
 
-public sealed class SourceList<T> : IList<T>, ReadOnlySourceList<T>, InnerListProvider<T>, IDisposable
+public sealed class SourceList<T> : IList<T>, ReadOnlySourceList<T>
 {
 	public int Count => _items.Count;
 
@@ -37,8 +37,6 @@ public sealed class SourceList<T> : IList<T>, ReadOnlySourceList<T>, InnerListPr
 			NotifyObservers(change);
 		}
 	}
-
-	IReadOnlyList<T> InnerListProvider<T>.Inner => _items;
 
 	public SourceList()
 	{

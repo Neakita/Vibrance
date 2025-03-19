@@ -2,17 +2,16 @@ using Vibrance.Changes;
 
 namespace Vibrance.Middlewares.Sorting;
 
-internal sealed class Sorter<T> : IndexedChangesMiddleware<T, T>, InnerListProvider<T>
+internal sealed class Sorter<T> : IndexedChangesMiddleware<T, T>
 {
-	IReadOnlyList<T> InnerListProvider<T>.Inner => _sorted;
-
 	public Sorter(IComparer<T>? comparer)
 	{
-		_oldItemsHandler = new SorterOldItemsHandler<T>(_sourceToSortedIndexLookup, _sorted);
+		_oldItemsHandler = new SorterOldItemsHandler<T>(_sourceToSortedIndexLookup, SortedItems);
 		comparer ??= Comparer<T>.Default;
-		_newItemsHandler = new SorterNewItemsHandler<T>(_sourceToSortedIndexLookup, _sorted, comparer);
+		_newItemsHandler = new SorterNewItemsHandler<T>(_sourceToSortedIndexLookup, SortedItems, comparer);
 	}
 
+	internal List<T> SortedItems { get; } = new();
 	internal IReadOnlyList<int> SourceToSortedIndexLookup => _sourceToSortedIndexLookup;
 
 	protected override void HandleChange(IndexedChange<T> change)
@@ -31,7 +30,6 @@ internal sealed class Sorter<T> : IndexedChangesMiddleware<T, T>, InnerListProvi
 	}
 
 	private readonly List<int> _sourceToSortedIndexLookup = new();
-	private readonly List<T> _sorted = new();
 	private readonly SorterOldItemsHandler<T> _oldItemsHandler;
 	private readonly SorterNewItemsHandler<T> _newItemsHandler;
 

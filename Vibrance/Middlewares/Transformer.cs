@@ -3,22 +3,21 @@ using Vibrance.Changes;
 
 namespace Vibrance.Middlewares;
 
-internal sealed class Transformer<TSource, TDestination> : IndexedChangesMiddleware<TSource, TDestination>, InnerListProvider<TDestination>
+internal sealed class Transformer<TSource, TDestination> : IndexedChangesMiddleware<TSource, TDestination>
 {
-	IReadOnlyList<TDestination> InnerListProvider<TDestination>.Inner => _transformedItems;
-
 	public Transformer(Func<TSource, TDestination> selector)
 	{
 		_selector = selector;
 	}
 
+	internal List<TDestination> TransformedItems { get; } = new();
+
 	private readonly Func<TSource, TDestination> _selector;
-	private readonly List<TDestination> _transformedItems = new();
 
 	protected override void HandleChange(IndexedChange<TSource> change)
 	{
 		var transformedChange = Transform(change);
-		transformedChange.ApplyToList(_transformedItems);
+		transformedChange.ApplyToList(TransformedItems);
 		DestinationObserver.OnNext(transformedChange);
 	}
 
@@ -35,7 +34,7 @@ internal sealed class Transformer<TSource, TDestination> : IndexedChangesMiddlew
 	{
 		if (count == 0)
 			return ReadOnlyCollection<TDestination>.Empty;
-		return _transformedItems.GetRange(index, count);
+		return TransformedItems.GetRange(index, count);
 	}
 
 	private IReadOnlyList<TDestination> Transform(IReadOnlyCollection<TSource> items)
