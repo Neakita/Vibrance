@@ -4,7 +4,7 @@ using Vibrance.Utilities;
 
 namespace Vibrance;
 
-public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<IndexedChange<T>>, InnerListProvider<T>
+public sealed class SourceList<T> : IList<T>, ReadOnlySourceList<T>, InnerListProvider<T>, IDisposable
 {
 	public int Count => _items.Count;
 
@@ -181,6 +181,11 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Inde
 	public void ReplaceAll(params IEnumerable<T> items)
 	{
 		var itemsList = items.ToList();
+		if (itemsList.Count == 0)
+		{
+			Clear();
+			return;
+		}
 		Reset<T> change = new()
 		{
 			OldItems = _items,
@@ -188,6 +193,11 @@ public sealed class SourceList<T> : IList<T>, IReadOnlyList<T>, IObservable<Inde
 		};
 		_items = new List<T>(itemsList);
 		NotifyObservers(change);
+	}
+
+	public void Dispose()
+	{
+		_observers.Clear();
 	}
 
 	private readonly List<IObserver<IndexedChange<T>>> _observers = new();
