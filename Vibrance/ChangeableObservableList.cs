@@ -6,7 +6,7 @@ using Vibrance.Utilities;
 
 namespace Vibrance;
 
-internal sealed class ChangeableObservableList<T> : ReadOnlyObservableList<T>
+internal sealed class ChangeableObservableList<T> : IList, ReadOnlyObservableList<T>
 {
 	public event NotifyCollectionChangedEventHandler? CollectionChanged;
 	public event PropertyChangedEventHandler? PropertyChanged;
@@ -94,4 +94,62 @@ internal sealed class ChangeableObservableList<T> : ReadOnlyObservableList<T>
 	{
 		PropertyChanged?.Invoke(this, KnownPropertyChangedEventArgs.IndexerChangedEventArgs);
 	}
+
+	#region IList implementation
+
+	void ICollection.CopyTo(Array array, int index)
+	{
+		((ICollection)_items).CopyTo(array, index);
+	}
+
+	bool ICollection.IsSynchronized => ((ICollection)_items).IsSynchronized;
+
+	object ICollection.SyncRoot => ((ICollection)_items).SyncRoot;
+
+	int IList.Add(object? value)
+	{
+		throw new NotSupportedException();
+	}
+
+	void IList.Clear()
+	{
+		throw new NotSupportedException();
+	}
+
+	bool IList.Contains(object? value)
+	{
+		return ((IList)_items).Contains(value);
+	}
+
+	int IList.IndexOf(object? value)
+	{
+		return ((IList)_items).IndexOf(value);
+	}
+
+	void IList.Insert(int index, object? value)
+	{
+		throw new NotSupportedException();
+	}
+
+	void IList.Remove(object? value)
+	{
+		throw new NotSupportedException();
+	}
+
+	void IList.RemoveAt(int index)
+	{
+		throw new NotSupportedException();
+	}
+
+	bool IList.IsFixedSize => false;
+
+	bool IList.IsReadOnly => true;
+
+	object? IList.this[int index]
+	{
+		get => _items[index];
+		set => throw new NotSupportedException();
+	}
+
+	#endregion
 }

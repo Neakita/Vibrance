@@ -6,7 +6,7 @@ using Vibrance.Utilities;
 
 namespace Vibrance;
 
-public sealed class ObservableList<T> : IList<T>, ReadOnlyObservableList<T>
+public sealed class ObservableList<T> : IList<T>, IList, ReadOnlyObservableList<T>
 {
 	public event NotifyCollectionChangedEventHandler? CollectionChanged;
 	public event PropertyChangedEventHandler? PropertyChanged;
@@ -251,4 +251,57 @@ public sealed class ObservableList<T> : IList<T>, ReadOnlyObservableList<T>
 	{
 		PropertyChanged?.Invoke(this, KnownPropertyChangedEventArgs.IndexerChangedEventArgs);
 	}
+
+	#region IList implementation
+
+	
+
+	bool IList.IsFixedSize => ((IList)_items).IsFixedSize;
+
+	bool IList.Contains(object? value)
+	{
+		return value is T typedValue && _items.Contains(typedValue);
+	}
+
+	int IList.IndexOf(object? value)
+	{
+		if (value is not T typedValue)
+			return -1;
+		return _items.IndexOf(typedValue);
+	}
+
+	void IList.Insert(int index, object? value)
+	{
+		Insert(index, (T)value!);
+	}
+
+	void IList.Remove(object? value)
+	{
+		Remove((T)value!);
+	}
+
+	int IList.Add(object? value)
+	{
+		if (value is not T typedValue)
+			return -1;
+		Add(typedValue);
+		return Count - 1;
+	}
+
+	object? IList.this[int index]
+	{
+		get => _items[index];
+		set => this[index] = (T)value!;
+	}
+
+	bool ICollection.IsSynchronized => ((ICollection)_items).IsSynchronized;
+
+	object ICollection.SyncRoot => ((ICollection)_items).SyncRoot;
+
+	void ICollection.CopyTo(Array array, int index)
+	{
+		((ICollection)_items).CopyTo(array, index);
+	}
+
+	#endregion
 }
