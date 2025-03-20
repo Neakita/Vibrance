@@ -189,6 +189,11 @@ public sealed class ObservableList<T> : IList<T>, IList, ReadOnlyObservableList<
 			Clear();
 			return;
 		}
+		if (_items.Count == 0)
+		{
+			AddRange(itemsList);
+			return;
+		}
 		Reset<T> change = new()
 		{
 			OldItems = _items,
