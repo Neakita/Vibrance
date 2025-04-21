@@ -120,6 +120,8 @@ public sealed class ObservableList<T> : IList<T>, IList, ReadOnlyObservableList<
 	public void InsertRange(int index, params IEnumerable<T> items)
 	{
 		var itemsList = items.ToList();
+		if (itemsList.Count == 0)
+			return;
 		_items.InsertRange(index, itemsList);
 		Insertion<T> change = new()
 		{
