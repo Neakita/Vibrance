@@ -1,6 +1,6 @@
 namespace Vibrance.Utilities;
 
-internal static class Extensions
+public static class Extensions
 {
 	public static IEnumerable<Range> ToRanges(this IEnumerable<int> indexes)
 	{
