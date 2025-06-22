@@ -39,7 +39,7 @@ public sealed class Insertion<T> : IndexedChange<T>
 
 	IndexedChangeFactory IndexedChange<T>.Factory => InsertionFactory.Instance;
 
-	NotifyCollectionChangedEventArgs IndexedChange<T>.ToNotifyCollectionChangedEventArgs()
+	public NotifyCollectionChangedEventArgs ToNotifyCollectionChangedEventArgs()
 	{
 		return new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, (IList)Items, Index);
 	}
