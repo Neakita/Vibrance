@@ -1,16 +1,11 @@
 using System.Collections;
-using System.Collections.Specialized;
-using System.ComponentModel;
 using Vibrance.Changes;
 using Vibrance.Utilities;
 
 namespace Vibrance;
 
-public sealed class ObservableList<T> : IList<T>, IList, ReadOnlyObservableList<T>
+public sealed class ObservableList<T> : ReadOnlyObservableList<T>
 {
-	public event NotifyCollectionChangedEventHandler? CollectionChanged;
-	public event PropertyChangedEventHandler? PropertyChanged;
-
 	public int Count => _items.Count;
 
 	public IDisposable Subscribe(IObserver<IndexedChange<T>> observer)
@@ -23,8 +18,6 @@ public sealed class ObservableList<T> : IList<T>, IList, ReadOnlyObservableList<
 	public List<T>.Enumerator GetEnumerator() => _items.GetEnumerator();
 	IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
 	IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
-	public bool IsReadOnly => false;
 
 	public T this[int index]
 	{
@@ -39,7 +32,7 @@ public sealed class ObservableList<T> : IList<T>, IList, ReadOnlyObservableList<
 				OldItems = [oldItem],
 				NewItems = [value]
 			};
-			Notify(change);
+			NotifyObservers(change);
 		}
 	}
 
@@ -79,7 +72,7 @@ public sealed class ObservableList<T> : IList<T>, IList, ReadOnlyObservableList<
 			OldItems = _items
 		};
 		_items = new List<T>();
-		Notify(change);
+		NotifyObservers(change);
 	}
 
 	public bool Contains(T item)
@@ -114,7 +107,7 @@ public sealed class ObservableList<T> : IList<T>, IList, ReadOnlyObservableList<
 			Index = index,
 			Items = [item]
 		};
-		Notify(change);
+		NotifyObservers(change);
 	}
 
 	public void InsertRange(int index, params IEnumerable<T> items)
@@ -128,7 +121,7 @@ public sealed class ObservableList<T> : IList<T>, IList, ReadOnlyObservableList<
 			Index = index,
 			Items = itemsList
 		};
-		Notify(change);
+		NotifyObservers(change);
 	}
 
 	public void RemoveAt(int index)
@@ -140,7 +133,7 @@ public sealed class ObservableList<T> : IList<T>, IList, ReadOnlyObservableList<
 			Index = index,
 			Items = [item]
 		};
-		Notify(change);
+		NotifyObservers(change);
 	}
 
 	public void RemoveRange(int index, int count)
@@ -154,7 +147,7 @@ public sealed class ObservableList<T> : IList<T>, IList, ReadOnlyObservableList<
 			Index = index,
 			Items = items
 		};
-		Notify(change);
+		NotifyObservers(change);
 	}
 
 	public void Move(int oldIndex, int newIndex)
@@ -168,7 +161,7 @@ public sealed class ObservableList<T> : IList<T>, IList, ReadOnlyObservableList<
 			NewIndex = newIndex,
 			Items = [item]
 		};
-		Notify(change);
+		NotifyObservers(change);
 	}
 
 	public void MoveRange(int oldIndex, int count, int newIndex)
@@ -180,7 +173,7 @@ public sealed class ObservableList<T> : IList<T>, IList, ReadOnlyObservableList<
 			NewIndex = newIndex,
 			Items = movedItems
 		};
-		Notify(change);
+		NotifyObservers(change);
 	}
 
 	public void ReplaceAll(params IEnumerable<T> items)
@@ -202,7 +195,7 @@ public sealed class ObservableList<T> : IList<T>, IList, ReadOnlyObservableList<
 			NewItems = itemsList
 		};
 		_items = new List<T>(itemsList);
-		Notify(change);
+		NotifyObservers(change);
 	}
 
 	public void Dispose()
@@ -227,88 +220,9 @@ public sealed class ObservableList<T> : IList<T>, IList, ReadOnlyObservableList<
 		observer.OnNext(initialChange);
 	}
 
-	private void Notify(IndexedChange<T> change)
-	{
-		NotifyObservers(change);
-		NotifyCollectionChanged(change);
-		NotifyCountChanged();
-		NotifyIndexerChanged();
-	}
-
 	private void NotifyObservers(IndexedChange<T> change)
 	{
 		foreach (var observer in _observers)
 			observer.OnNext(change);
 	}
-
-	private void NotifyCollectionChanged(IndexedChange<T> change)
-	{
-		if (CollectionChanged == null)
-			return;
-		var args = change.ToNotifyCollectionChangedEventArgs();
-		CollectionChanged.Invoke(this, args);
-	}
-
-	private void NotifyCountChanged()
-	{
-		PropertyChanged?.Invoke(this, KnownPropertyChangedEventArgs.CountChangedEventArgs);
-	}
-
-	private void NotifyIndexerChanged()
-	{
-		PropertyChanged?.Invoke(this, KnownPropertyChangedEventArgs.IndexerChangedEventArgs);
-	}
-
-	#region IList implementation
-
-	
-
-	bool IList.IsFixedSize => ((IList)_items).IsFixedSize;
-
-	bool IList.Contains(object? value)
-	{
-		return value is T typedValue && _items.Contains(typedValue);
-	}
-
-	int IList.IndexOf(object? value)
-	{
-		if (value is not T typedValue)
-			return -1;
-		return _items.IndexOf(typedValue);
-	}
-
-	void IList.Insert(int index, object? value)
-	{
-		Insert(index, (T)value!);
-	}
-
-	void IList.Remove(object? value)
-	{
-		Remove((T)value!);
-	}
-
-	int IList.Add(object? value)
-	{
-		if (value is not T typedValue)
-			return -1;
-		Add(typedValue);
-		return Count - 1;
-	}
-
-	object? IList.this[int index]
-	{
-		get => _items[index];
-		set => this[index] = (T)value!;
-	}
-
-	bool ICollection.IsSynchronized => ((ICollection)_items).IsSynchronized;
-
-	object ICollection.SyncRoot => ((ICollection)_items).SyncRoot;
-
-	void ICollection.CopyTo(Array array, int index)
-	{
-		((ICollection)_items).CopyTo(array, index);
-	}
-
-	#endregion
 }
