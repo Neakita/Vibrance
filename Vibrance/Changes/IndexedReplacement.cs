@@ -4,7 +4,7 @@ using Vibrance.Changes.Factories;
 
 namespace Vibrance.Changes;
 
-public sealed class IndexedReplacement<T> : IndexedChange<T>
+public sealed class IndexedReplacement<T> : Replacement<T>, IndexedChange<T>
 {
 	public required int Index
 	{
@@ -16,32 +16,6 @@ public sealed class IndexedReplacement<T> : IndexedChange<T>
 					nameof(value),
 					value,
 					$"{nameof(value)} for {nameof(Index)} expected to be greater than or equal to zero");
-			field = value;
-		}
-	}
-
-	public required IReadOnlyList<T> OldItems
-	{
-		get;
-		init
-		{
-			if (value.Count == 0)
-				throw new ArgumentException(
-					$"{nameof(value)} for {nameof(OldItems)} expected to have at least one item",
-					nameof(value));
-			field = value;
-		}
-	}
-
-	public required IReadOnlyList<T> NewItems
-	{
-		get;
-		init
-		{
-			if (value.Count == 0)
-				throw new ArgumentException(
-					$"{nameof(value)} for {nameof(NewItems)} expected to have at least one item",
-					nameof(value));
 			field = value;
 		}
 	}

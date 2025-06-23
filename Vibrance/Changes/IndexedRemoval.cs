@@ -5,7 +5,7 @@ using Vibrance.Changes.Factories;
 
 namespace Vibrance.Changes;
 
-public sealed class IndexedRemoval<T> : IndexedChange<T>
+public sealed class IndexedRemoval<T> : Removal<T>, IndexedChange<T>
 {
 	public required int Index
 	{
@@ -21,10 +21,6 @@ public sealed class IndexedRemoval<T> : IndexedChange<T>
 		}
 	}
 
-	public required IReadOnlyList<T> Items { get; init; }
-
-	IReadOnlyList<T> Change<T>.OldItems => Items;
-	IReadOnlyList<T> Change<T>.NewItems => ReadOnlyCollection<T>.Empty;
 	int IndexedChange<T>.OldIndex => Index;
 	int IndexedChange<T>.NewIndex => -1;
 

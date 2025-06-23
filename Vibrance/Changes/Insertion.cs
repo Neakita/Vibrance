@@ -5,7 +5,7 @@ using Vibrance.Changes.Factories;
 
 namespace Vibrance.Changes;
 
-public sealed class Insertion<T> : IndexedChange<T>
+public sealed class Insertion<T> : Addition<T>, IndexedChange<T>
 {
 	public required int Index
 	{
@@ -21,21 +21,8 @@ public sealed class Insertion<T> : IndexedChange<T>
 		}
 	}
 
-	public required IReadOnlyList<T> Items
-	{
-		get;
-		init
-		{
-			if (value.Count == 0)
-				throw new ArgumentException($"{nameof(value)} for {nameof(Items)} expected to have at least one item");
-			field = value;
-		}
-	}
-
 	int IndexedChange<T>.OldIndex => -1;
 	int IndexedChange<T>.NewIndex => Index;
-	IReadOnlyList<T> Change<T>.OldItems => ReadOnlyCollection<T>.Empty;
-	IReadOnlyList<T> Change<T>.NewItems => Items;
 
 	IndexedChangeFactory IndexedChange<T>.Factory => InsertionFactory.Instance;
 
