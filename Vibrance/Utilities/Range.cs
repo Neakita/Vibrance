@@ -1,6 +1,6 @@
 namespace Vibrance.Utilities;
 
-public readonly struct Range
+internal readonly struct Range
 {
 	public int Start { get; }
 	public int End { get; }
