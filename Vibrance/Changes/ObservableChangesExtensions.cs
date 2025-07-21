@@ -47,4 +47,9 @@ public static class ObservableChangesExtensions
 			DestinationObserver = observer,
 			SourceObservable = source
 		});
+
+	public static ReadOnlyNotifyingList<T> ToReadOnlyNotifyingList<T>(this ReadOnlyObservableList<T> observableList)
+	{
+		return new ReadOnlyNotifyingList<T>(observableList);
+	}
 }
