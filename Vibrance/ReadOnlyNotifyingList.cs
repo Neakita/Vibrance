@@ -123,14 +123,24 @@ public sealed class ReadOnlyNotifyingList<T> :
 	private void UpdateSubscription()
 	{
 		var hasHandlers = InternalCollectionChanged != null || InternalPropertyChanged != null;
-		if (_disposable == null && hasHandlers)
+		if (hasHandlers)
 			Subscribe();
-		else if (_disposable != null && !hasHandlers)
-			_disposable.Dispose();
+		else
+			Unsubscribe();
+	}
+
+	private void Unsubscribe()
+	{
+		if (_disposable == null)
+			return;
+		_disposable.Dispose();
+		_disposable = null;
 	}
 
 	private void Subscribe()
 	{
+		if (_disposable != null)
+			return;
 		_ignoreChanges = true;
 		_disposable = _observableList.Subscribe(OnChange);
 		_ignoreChanges = false;
