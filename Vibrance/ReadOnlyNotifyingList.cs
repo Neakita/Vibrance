@@ -50,7 +50,7 @@ public sealed class ReadOnlyNotifyingList<T> :
 
 	object? IList.this[int index]
 	{
-		get => ((IList)_observableList)[index];
+		get => _observableList[index];
 		set => ((IList)_observableList)[index] = value;
 	}
 
