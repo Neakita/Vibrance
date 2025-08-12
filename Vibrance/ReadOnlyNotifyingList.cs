@@ -95,7 +95,10 @@ public sealed class ReadOnlyNotifyingList<T> :
 
 	public int IndexOf(object? value)
 	{
-		return ((IList)_observableList).IndexOf(value);
+		for (var i = 0; i < _observableList.Count; i++)
+			if (Equals(_observableList[i], value))
+				return i;
+		return -1;
 	}
 
 	public void Insert(int index, object? value)
