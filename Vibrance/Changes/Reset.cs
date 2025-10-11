@@ -38,8 +38,8 @@ public sealed class Reset<T> : IndexedChange<T>
 		}
 	}
 
-	int IndexedChange<T>.OldIndex => 0;
-	int IndexedChange<T>.NewIndex => 0;
+	int IndexedChange<T>.OldIndex => OldItems.Count > 0 ? 0 : -1;
+	int IndexedChange<T>.NewIndex => NewItems.Count > 0 ? 0 : -1;
 
 	IndexedChangeFactory IndexedChange<T>.Factory => ResetFactory.Instance;
 

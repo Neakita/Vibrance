@@ -1,15 +1,10 @@
 namespace Vibrance.Utilities;
 
-internal sealed class ActionObserver<T> : IObserver<T>
+internal sealed class ActionObserver<T>(Action<T> action) : IObserver<T>
 {
-	public ActionObserver(Action<T> action)
-	{
-		_action = action;
-	}
-
 	public void OnNext(T value)
 	{
-		_action(value);
+		action(value);
 	}
 
 	public void OnCompleted()
@@ -20,6 +15,4 @@ internal sealed class ActionObserver<T> : IObserver<T>
 	{
 		throw error;
 	}
-
-	private readonly Action<T> _action;
 }

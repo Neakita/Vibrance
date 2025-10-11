@@ -52,4 +52,9 @@ public static class ObservableChangesExtensions
 	{
 		return new ReadOnlyNotifyingList<T>(observableList);
 	}
+
+	public static IObservable<IndexedChange<TTarget>> TransformMany<TSource, TTarget>(this IObservable<IndexedChange<TSource>> source, Func<TSource, IObservable<IndexedChange<TTarget>>> selector)
+	{
+		return Observable.Create<IndexedChange<TTarget>>(observer => new TransformMany<TSource, TTarget>(source, selector, observer));
+	}
 }
