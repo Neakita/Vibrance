@@ -28,10 +28,10 @@ internal sealed class Concat<T> : IDisposable
 
 	private void HandleInitialChanges(IndexedChange<T>? firstSourceChange, IndexedChange<T>? secondSourceChange)
 	{
-		var firstSourceInsertion = (Insertion<T>?)firstSourceChange;
-		var secondSourceInsertion = (Insertion<T>?)secondSourceChange;
-		var firstSourceItems = firstSourceInsertion?.Items ?? ReadOnlyCollection<T>.Empty;
-		var secondSourceItems = secondSourceInsertion?.Items ?? ReadOnlyCollection<T>.Empty;
+		var firstSourceItems = firstSourceChange?.NewItems ?? ReadOnlyCollection<T>.Empty;
+		var secondSourceItems = secondSourceChange?.NewItems ?? ReadOnlyCollection<T>.Empty;
+		if (firstSourceItems.Count + secondSourceItems.Count == 0)
+			return;
 		SecondSourceItemsOffset = firstSourceItems.Count;
 		Insertion<T> concatenatedChange = new()
 		{
